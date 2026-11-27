@@ -1,0 +1,5099 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acta Electoral Completa (4a y 4b) - Elecciones Regionales 2026</title>
+  <style>
+    /* =========================================================================
+       1. VARIABLES DE DISEÑO Y RESET CSS
+       ========================================================================= */
+    :root {
+      --paper-bg: #e9e4d7;
+      --canvas-bg: #cfc9be;
+      --ink: #1a1a1a;
+      --p4a-w: 1123px;
+      --p4a-min-h: 794px;
+      --p4b-w: 794px;
+      --p4b-min-h: 1123px;
+      --ui-dark: #18181b;
+      --ui-surface: #ffffff;
+      --ui-border: #cbd5e1;
+      --ui-text: #0f172a;
+      --ui-muted: #64748b;
+      --ok-bg: #dcfce7;
+      --ok-border: #16a34a;
+      --ok-text: #166534;
+      --err-bg: #fee2e2;
+      --err-border: #dc2626;
+      --err-text: #991b1b;
+      --warn-bg: #fef3c7;
+      --warn-border: #d97706;
+      --warn-text: #92400e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      background-color: var(--canvas-bg);
+      font-family: "Arial Narrow", Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* =========================================================================
+       2. CABECERA OPERATIVA FIJA Y COMPACTA
+       ========================================================================= */
+    .ops-header {
+      position: sticky;
+      top: 0;
+      z-index: 120;
+      width: 100%;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.22);
+    }
+
+    /* Fila 1: Barra principal */
+    .ops-topbar {
+      background: rgba(24, 24, 27, 0.97);
+      backdrop-filter: blur(10px);
+      color: #f4f4f5;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .topbar-left,
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #334155;
+      color: #f8fafc;
+    }
+
+    .status-chip[data-state="error"] {
+      background: #991b1b;
+      border-color: #ef4444;
+      color: #fef2f2;
+    }
+
+    .status-chip[data-state="ok"] {
+      background: #166534;
+      border-color: #22c55e;
+      color: #f0fdf4;
+    }
+
+    /* Indicador compacto de guardado automático offline */
+    .autosave-pill {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      min-height: 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: #e4e4e7;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .autosave-pill:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .autosave-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);
+      flex-shrink: 0;
+    }
+
+    .autosave-pill[data-save-state="saving"] .autosave-dot {
+      background: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    }
+
+    .autosave-pill[data-save-state="offline"] {
+      background: rgba(217, 119, 6, 0.2);
+      border-color: rgba(251, 191, 36, 0.45);
+      color: #fef3c7;
+    }
+
+    .autosave-pill[data-save-state="offline"] .autosave-dot {
+      background: #fbbf24;
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
+    }
+
+    .autosave-pill[data-save-state="error"] {
+      background: rgba(220, 38, 38, 0.25);
+      border-color: rgba(248, 113, 113, 0.55);
+      color: #fecaca;
+    }
+
+    .autosave-pill[data-save-state="error"] .autosave-dot {
+      background: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+    }
+
+    /* Botones de barra superior */
+    .top-btn {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f4f4f5;
+      padding: 5px 11px;
+      min-height: 30px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    }
+
+    .top-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .top-btn:active {
+      transform: scale(0.97);
+    }
+
+    .top-btn.active {
+      background: #f4f4f5;
+      color: #18181b;
+      border-color: #f4f4f5;
+    }
+
+    .top-btn-primary {
+      background: #f4f4f5;
+      color: #18181b;
+      border-color: #f4f4f5;
+    }
+
+    .top-btn-primary:hover {
+      background: #e4e4e7;
+    }
+
+    .top-btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: rgba(239, 68, 68, 0.45);
+      color: #fecaca;
+    }
+
+    .top-btn-danger:hover {
+      background: rgba(220, 38, 38, 0.85);
+      color: #ffffff;
+    }
+
+    .zoom-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(255, 255, 255, 0.07);
+      padding: 2px;
+      border-radius: 999px;
+    }
+
+    .zoom-group .top-btn {
+      border: none;
+      background: transparent;
+      min-height: 26px;
+      padding: 3px 9px;
+    }
+
+    .zoom-group .top-btn.active {
+      background: #f4f4f5;
+      color: #18181b;
+    }
+
+    .zoom-icon-btn {
+      width: 26px;
+      padding: 0 !important;
+      font-size: 15px !important;
+    }
+
+    .zoom-readout {
+      min-width: 40px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: #e4e4e7;
+      user-select: none;
+    }
+
+    .pill-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 11px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .pill-count.has-errors {
+      background: #ef4444;
+    }
+
+    .pill-count.all-ok {
+      background: #22c55e;
+      color: #052e16;
+    }
+
+    /* Popover de Control de errores */
+    .issues-popover-wrap {
+      position: relative;
+    }
+
+    .issues-popover {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 8px);
+      width: min(460px, 92vw);
+      max-height: 55vh;
+      background: #ffffff;
+      color: var(--ui-text);
+      border: 1px solid var(--ui-border);
+      border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 160;
+    }
+
+    .issues-popover.open {
+      display: flex;
+    }
+
+    .issues-popover-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 12px;
+    }
+
+    .issues-counts-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .ic-err {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--err-bg);
+      color: var(--err-text);
+    }
+
+    .ic-pen {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .ic-wrn {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    .issues-body {
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+
+    .issues-body ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .issue-item {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      align-items: start;
+      gap: 8px;
+      padding: 8px 9px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      line-height: 1.35;
+      transition: background-color 0.14s ease, border-color 0.14s ease;
+    }
+
+    .issue-item:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    .issue-badge {
+      display: inline-flex;
+      justify-content: center;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .issue-error .issue-badge {
+      background: var(--err-bg);
+      color: var(--err-text);
+    }
+
+    .issue-pending .issue-badge {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .issue-warning .issue-badge {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    .all-clear {
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--ok-bg);
+      color: var(--ok-text);
+      font-weight: 700;
+    }
+
+    /* Fila 1B: Tira fija de 4 reglas de validación automática en tiempo real */
+    .validation-strip {
+      background: #f8fafc;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .validation-rules-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .rule-pill {
+      appearance: none;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 9px;
+      border-radius: 9px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      text-align: left;
+      cursor: pointer;
+      min-width: 0;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .rule-pill:hover {
+      border-color: #94a3b8;
+    }
+
+    .rule-pill-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      flex-shrink: 0;
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .rule-pill-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      line-height: 1.15;
+    }
+
+    .rule-pill-title {
+      font-size: 10.5px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rule-pill-detail {
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rule-pill[data-rule-state="ok"] {
+      background: #f0fdf4;
+      border-color: #86efac;
+      color: #166534;
+    }
+
+    .rule-pill[data-rule-state="ok"] .rule-pill-icon {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .rule-pill[data-rule-state="ok"] .rule-pill-detail {
+      color: #15803d;
+    }
+
+    .rule-pill[data-rule-state="error"] {
+      background: #fef2f2;
+      border-color: #f87171;
+      color: #991b1b;
+    }
+
+    .rule-pill[data-rule-state="error"] .rule-pill-icon {
+      background: #dc2626;
+      color: #ffffff;
+    }
+
+    .rule-pill[data-rule-state="error"] .rule-pill-detail {
+      color: #b91c1c;
+      font-weight: 800;
+    }
+
+    .validation-alerts-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .validation-alert-btn {
+      appearance: none;
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #fca5a5;
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-align: left;
+      line-height: 1.3;
+      cursor: pointer;
+    }
+
+    .validation-alert-btn:hover {
+      background: #fecaca;
+    }
+
+    /* Fila 2: Tira compacta de mesas */
+    .mesa-strip {
+      background: #ffffff;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mesa-pager {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .pager-btn {
+      appearance: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #0f172a;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pager-btn:hover:not(:disabled) {
+      background: #e2e8f0;
+    }
+
+    .pager-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .pager-counter {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #334155;
+      min-width: 38px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mesa-chips-scroll {
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 1px 0;
+      min-width: 0;
+    }
+
+    .mesa-chips-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .mesa-chip {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #1e293b;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+    }
+
+    .mesa-chip:hover {
+      background: #e2e8f0;
+    }
+
+    .mesa-chip.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    .mesa-chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    .mesa-chip-dot.state-ok {
+      background: #22c55e;
+    }
+
+    .mesa-chip-dot.state-error {
+      background: #ef4444;
+    }
+
+    .mesa-chip-pct {
+      font-size: 10px;
+      opacity: 0.78;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mesa-strip-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .btn-new-mesa {
+      appearance: none;
+      border: 1px solid #0f172a;
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      min-height: 30px;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-new-mesa:hover {
+      background: #1e293b;
+    }
+
+    .btn-del-mesa {
+      appearance: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid #fca5a5;
+      background: #fef2f2;
+      color: #b91c1c;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-del-mesa:hover {
+      background: #dc2626;
+      color: #ffffff;
+    }
+
+    /* Fila 3: Pestañas A / B / C */
+    .tab-bar {
+      background: #f1f5f9;
+      padding: 6px 10px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      border-bottom: 1px solid #cbd5e1;
+    }
+
+    .tab-btn {
+      appearance: none;
+      min-height: 38px;
+      padding: 6px 10px;
+      border-radius: 9px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      touch-action: manipulation;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .tab-btn.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 800;
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .tab-btn.active .tab-badge {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+
+    .tab-badge.state-error {
+      background: #dc2626 !important;
+      color: #ffffff !important;
+    }
+
+    .tab-badge.state-ok {
+      background: #16a34a !important;
+      color: #ffffff !important;
+    }
+
+    /* =========================================================================
+       3. NOTIFICACIONES Y MODALES PERSONALIZADOS (SIN alert/confirm)
+       ========================================================================= */
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #18181b;
+      color: #ffffff;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 12.5px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      z-index: 250;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      max-width: 92vw;
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.56);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 300;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(400px, 100%);
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      color: var(--ui-text);
+    }
+
+    .modal-card h3 {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .modal-card p {
+      font-size: 13px;
+      line-height: 1.45;
+      color: #475569;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .modal-btn {
+      appearance: none;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #0f172a;
+      border-radius: 9px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .modal-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .modal-btn-danger {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: #ffffff;
+    }
+
+    .modal-btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    /* =========================================================================
+       4. ESCENARIO DE VISTA PREVIA Y SUPERFICIE DE PAPEL
+       ========================================================================= */
+    .viewer-stage {
+      width: 100%;
+      min-height: calc(100vh - 150px);
+      padding: 18px 12px 36px 12px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-x: auto;
+    }
+
+    .scale-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .pages-stack {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform-origin: top center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .paper-sheet {
+      position: relative;
+      background-color: var(--paper-bg);
+      background-image:
+        radial-gradient(rgba(145, 136, 118, 0.16) 1px, transparent 1px),
+        repeating-linear-gradient(
+          45deg,
+          rgba(160, 150, 130, 0.045) 0px,
+          rgba(160, 150, 130, 0.045) 2px,
+          transparent 2px,
+          transparent 8px
+        );
+      background-size: 6px 6px, 12px 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      color: var(--ink);
+      flex-shrink: 0;
+    }
+
+    .arrow-svg {
+      width: 14px;
+      height: 11px;
+      display: inline-block;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    /* Visibilidad según pestaña A / B / C */
+    body[data-tab="a"] #page4b,
+    body[data-tab="b"] #page4b {
+      display: none !important;
+    }
+
+    body[data-tab="c"] #page4a {
+      display: none !important;
+    }
+
+    body[data-tab="a"] #page4a .sections-grid,
+    body[data-tab="b"] #page4a .sections-grid {
+      grid-template-columns: 1fr;
+    }
+
+    body[data-tab="a"] #page4a .section-box[data-section="B"],
+    body[data-tab="b"] #page4a .section-box[data-section="A"] {
+      display: none !important;
+    }
+
+    /* =========================================================================
+       5. CONTROLES INTERACTIVOS SOBRE EL PAPEL (VERIFICACIÓN, HORAS, ALERTAS)
+       ========================================================================= */
+    .verify-btn {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.6px solid #64748b;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.72);
+      color: #475569;
+      font-family: system-ui, sans-serif;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+      touch-action: manipulation;
+      transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.1s ease;
+    }
+
+    .verify-btn:hover {
+      background: #ffffff;
+      border-color: #334155;
+    }
+
+    .verify-btn:active {
+      transform: scale(0.94);
+    }
+
+    .verify-btn.size-inline {
+      width: 22px;
+      height: 22px;
+      font-size: 13px;
+    }
+
+    .verify-btn.size-block {
+      width: 28px;
+      height: 28px;
+      font-size: 15px;
+      border-radius: 7px;
+    }
+
+    .verify-btn.is-verified {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #15803d;
+    }
+
+    .verify-btn.is-error {
+      background: #fee2e2;
+      border-color: #dc2626;
+      color: #b91c1c;
+    }
+
+    .verify-container {
+      position: relative;
+    }
+
+    .verify-container > .verify-btn {
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+    }
+
+    .verify-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      margin-top: 4px;
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .material-verify-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: 8px;
+      vertical-align: middle;
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    /* Entradas editables integradas en los recuadros de cabecera */
+    .paper-inline-input {
+      border: none;
+      background: transparent;
+      color: #111111;
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      outline: none;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .paper-inline-input::placeholder {
+      color: rgba(26, 26, 26, 0.35);
+      font-weight: 700;
+    }
+
+    .paper-inline-input:focus {
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .ubigeo-input {
+      text-transform: uppercase;
+      font-size: 11.5px;
+    }
+
+    /* Selector de hora interactivo directo sobre la línea punteada */
+    .time-inline-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      vertical-align: baseline;
+      border-radius: 4px;
+      padding: 0 2px;
+    }
+
+    .time-inline-icon {
+      font-size: 11px;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .time-native-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* Resaltados de error y coincidencia */
+    .field-error {
+      border-color: #dc2626 !important;
+      background-color: #fee2e2 !important;
+      box-shadow: 0 0 0 1.5px rgba(220, 38, 38, 0.32);
+    }
+
+    .inline-field-alert {
+      margin: -3px 0 9px;
+      padding: 6px 9px;
+      border-radius: 7px;
+      border: 1px solid #fca5a5;
+      background: #fee2e2;
+      color: #991b1b;
+      font-family: system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .digit-grid.is-match-cell {
+      background-color: #dcfce7 !important;
+      box-shadow: inset 0 0 0 2px #16a34a;
+    }
+
+    .digit-grid.is-match-cell input {
+      color: #166534 !important;
+    }
+
+    /* =========================================================================
+       6. HOJA 1 — FORMULARIO 4a (INSTALACIÓN Y SUFRAGIO)
+       ========================================================================= */
+    .page-4a {
+      width: var(--p4a-w);
+      min-height: var(--p4a-min-h);
+      height: auto;
+      padding: 26px 32px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1.5px solid #2b2b2b;
+    }
+
+    .page-4a .fiducial {
+      position: absolute;
+      width: 11px;
+      height: 11px;
+      background-color: #1a1a1a;
+    }
+    .page-4a .fid-tl-1 { top: 16px; left: 12px; }
+    .page-4a .fid-tl-2 { top: 16px; left: 34px; }
+    .page-4a .fid-tr   { top: 16px; right: 16px; }
+    .page-4a .fid-bl   { bottom: 14px; left: 14px; }
+    .page-4a .fid-br   { bottom: 14px; right: 16px; }
+
+    .page-4a .header-4a {
+      display: grid;
+      grid-template-columns: 280px 1fr 290px;
+      align-items: start;
+      gap: 10px;
+      padding: 4px 14px 4px;
+    }
+
+    .page-4a .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .page-4a .logo-qr-row {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .page-4a .onpe-brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-4a .onpe-text {
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      font-size: 17px;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .page-4a .small-label {
+      font-size: 8.5px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .page-4a .mesa-box {
+      border: 1.4px solid #222;
+      background: rgba(255, 255, 255, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 6px 3px 10px;
+      min-width: 155px;
+    }
+
+    .mesa-input-4a {
+      font-size: 15px;
+      letter-spacing: 1.2px;
+      width: 96px;
+    }
+
+    .page-4a .header-center {
+      text-align: center;
+      padding-top: 2px;
+    }
+
+    .page-4a .election-subtitle {
+      font-size: 11.5px;
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .page-4a .main-title {
+      font-family: Arial, sans-serif;
+      font-size: 25px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      margin-top: 6px;
+    }
+
+    .page-4a .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .page-4a .barcode-row {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .page-4a .barcode-wrap {
+      text-align: center;
+    }
+
+    .page-4a .barcode-text {
+      font-size: 9px;
+      font-weight: 700;
+      margin-top: 1px;
+      letter-spacing: 0.5px;
+    }
+
+    .page-4a .form-code {
+      font-family: Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .page-4a .electores-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-4a .electores-label {
+      font-size: 9.5px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .page-4a .electores-box {
+      border: 1.4px solid #222;
+      background: rgba(255, 255, 255, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 5px 2px 8px;
+    }
+
+    .electores-input-4a {
+      width: 44px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .page-4a .ubigeo-row {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 2.1fr;
+      gap: 8px;
+      padding: 4px 14px 8px;
+    }
+
+    .page-4a .ubigeo-field {
+      border: 1.2px solid #333;
+      padding: 3px 5px 3px 8px;
+      background: rgba(255, 255, 255, 0.24);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-4a .sections-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 14px;
+      flex: 1;
+    }
+
+    .page-4a .section-box {
+      border: 1.4px solid #222;
+      padding: 12px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .page-4a .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .page-4a .letter-badge {
+      border: 1.8px solid #1a1a1a;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    .page-4a .section-title {
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .page-4a .install-text {
+      font-size: 11px;
+      line-height: 1.9;
+      margin-bottom: 10px;
+    }
+
+    .page-4a .dotted-input {
+      border: none;
+      border-bottom: 1.3px dotted #222;
+      background: transparent;
+      width: 82px;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+      color: #111;
+      padding: 0 2px;
+    }
+
+    .page-4a .checkbox-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .page-4a .yn-btn {
+      appearance: none;
+      border: 1.3px solid #222;
+      min-width: 34px;
+      height: 24px;
+      padding: 0 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-size: 10.5px;
+      font-weight: 900;
+      background: rgba(255, 255, 255, 0.35);
+      color: #1a1a1a;
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.12s ease;
+    }
+
+    .page-4a .yn-btn:hover {
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .page-4a .yn-btn.checked::before,
+    .page-4a .yn-btn.checked::after {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 1.8px;
+      background-color: #1a1a1a;
+    }
+
+    .page-4a .yn-btn.checked::before { transform: rotate(28deg); }
+    .page-4a .yn-btn.checked::after  { transform: rotate(-28deg); }
+
+    .page-4a .quantity-box {
+      border: 1.2px solid #222;
+      padding: 8px 10px 6px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .page-4a .quantity-title {
+      font-family: Arial, sans-serif;
+      font-size: 10.5px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .page-4a .quantity-content {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .page-4a .letters-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .page-4a .letters-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 3px;
+    }
+
+    .page-4a .letters-input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      background: transparent;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: #111;
+      outline: none;
+      padding: 2px 4px;
+    }
+
+    .page-4a .sub-caption {
+      font-size: 8.5px;
+      color: #444;
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .page-4a .digits-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .page-4a .digit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 28px);
+      height: 30px;
+      border: 1.3px solid #222;
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .page-4a .digit-grid-dashed-outer {
+      border: 1.3px dashed #222;
+      padding: 3px;
+      background: transparent;
+    }
+
+    .page-4a .digit-grid input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-right: 0.8px solid #777;
+      background: transparent;
+      text-align: center;
+      font-family: "Courier New", monospace;
+      font-size: 17px;
+      font-weight: 700;
+      color: #111;
+      outline: none;
+    }
+
+    .page-4a .digit-grid input:focus {
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .page-4a .digit-grid input:last-child {
+      border-right: none;
+    }
+
+    .page-4a .observations-4a {
+      margin-bottom: 10px;
+    }
+
+    .page-4a .obs-label {
+      font-family: Arial, sans-serif;
+      font-size: 9px;
+      font-weight: 900;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .page-4a .obs-textarea {
+      border: none;
+      background-color: transparent;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 16px,
+        rgba(50, 50, 50, 0.4) 16px,
+        rgba(50, 50, 50, 0.4) 17px
+      );
+      width: 100%;
+      resize: vertical;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      line-height: 17px;
+      color: #111;
+      outline: none;
+    }
+
+    .page-4a .sufragio-end {
+      font-size: 11px;
+      font-style: italic;
+      margin: 4px 0 10px;
+    }
+
+    .page-4a .members-title {
+      font-family: Arial, sans-serif;
+      font-size: 8.5px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .page-4a .members-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .page-4a .member-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-4a .sig-box {
+      border: 1px solid #333;
+      height: 54px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .page-4a .role-bar {
+      background-color: #b4b0a7;
+      border: 1px solid #333;
+      border-top: none;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      font-size: 7.5px;
+      font-weight: 900;
+      padding: 2px 0;
+      margin-bottom: 5px;
+    }
+
+    .page-4a .field-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 5px;
+      font-size: 7px;
+      font-weight: 700;
+    }
+
+    .page-4a .field-line input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      border-bottom: 0.8px solid #444;
+      background: transparent;
+      font-size: 9.5px;
+      color: #111;
+      outline: none;
+      padding: 2px;
+    }
+
+    .page-4a .field-line input:focus {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .page-4a .dni-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 7px;
+      font-weight: 700;
+    }
+
+    .page-4a .dni-tag {
+      background: #222;
+      color: #fff;
+      font-size: 6.5px;
+      font-weight: 800;
+      padding: 2px 4px;
+    }
+
+    .page-4a .dni-cells {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      min-width: 0;
+    }
+
+    .page-4a .dni-cells input {
+      width: 100%;
+      border: none;
+      border-bottom: 0.8px solid #444;
+      border-right: 0.7px solid #555;
+      height: 20px;
+      background: transparent;
+      text-align: center;
+      font-family: "Courier New", monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #111;
+      outline: none;
+    }
+
+    .page-4a .dni-cells input:focus {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .page-4a .dni-cells input:last-child {
+      border-right: none;
+    }
+
+    .page-4a .personeros-section {
+      margin-top: auto;
+      padding-top: 4px;
+    }
+
+    .page-4a .personeros-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .page-4a .personero-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-4a .personero-sig-line {
+      border-bottom: 0.9px solid #333;
+      height: 30px;
+      margin-bottom: 2px;
+    }
+
+    .page-4a .personero-label {
+      text-align: center;
+      font-size: 7px;
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+
+    /* =========================================================================
+       7. HOJA 2 — FORMULARIO 4b (ACTA DE ESCRUTINIO)
+       ========================================================================= */
+    .page-4b {
+      width: var(--p4b-w);
+      min-height: var(--p4b-min-h);
+      height: auto;
+      padding: 40px 44px 34px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1.5px solid #2b2b2b;
+    }
+
+    .page-4b .reg-mark {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #1a1a1a;
+    }
+    .page-4b .rm-tl1 { top: 24px; left: 32px; }
+    .page-4b .rm-tl2 { top: 24px; left: 68px; }
+    .page-4b .rm-tm  { top: 30px; left: 368px; width: 6px; height: 6px; }
+    .page-4b .rm-tr1 { top: 24px; right: 118px; width: 7px; height: 7px; }
+    .page-4b .rm-tr2 { top: 24px; right: 72px; width: 7px; height: 7px; }
+    .page-4b .rm-tr3 { top: 24px; right: 32px; width: 7px; height: 7px; }
+    .page-4b .rm-ml1 { top: 255px; left: 22px; }
+    .page-4b .rm-ml2 { top: 400px; left: 22px; }
+    .page-4b .rm-ml3 { top: 595px; left: 22px; }
+    .page-4b .rm-mr1 { top: 262px; right: 22px; }
+    .page-4b .rm-mr2 { top: 400px; right: 22px; }
+    .page-4b .rm-mr3 { top: 595px; right: 22px; }
+
+    .page-4b .top-bar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .page-4b .logos-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 16px;
+    }
+
+    .page-4b .onpe-brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-4b .onpe-text {
+      font-family: Arial, sans-serif;
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .page-4b .qr-box {
+      margin-left: 20px;
+      width: 44px;
+      height: 44px;
+    }
+
+    .page-4b .barcode-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .page-4b .barcode-code {
+      font-size: 9px;
+      font-weight: bold;
+      letter-spacing: 0.6px;
+      margin-top: 1px;
+    }
+
+    .page-4b .form-code {
+      font-family: Arial, sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      margin-right: 16px;
+      margin-top: 4px;
+    }
+
+    .page-4b .titles-row {
+      display: grid;
+      grid-template-columns: 145px 1fr 168px;
+      align-items: end;
+      gap: 8px;
+      margin-top: -4px;
+      margin-bottom: 6px;
+    }
+
+    .page-4b .mesa-box-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-4b .mesa-label {
+      font-size: 9px;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .page-4b .mesa-number {
+      border: 1.4px solid #222;
+      background: rgba(255, 255, 255, 0.28);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 5px 2px 7px;
+    }
+
+    .mesa-input-4b {
+      font-size: 14px;
+      letter-spacing: 0.8px;
+    }
+
+    .page-4b .center-titles {
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .page-4b .center-titles .t1 {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .page-4b .center-titles .t2 {
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .page-4b .center-titles .t3 {
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      font-weight: 900;
+      margin-top: 2px;
+      letter-spacing: 0.4px;
+    }
+
+    .page-4b .electores-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+    }
+
+    .page-4b .electores-label {
+      font-size: 7.5px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+    }
+
+    .page-4b .electores-box {
+      border: 1.2px solid #222;
+      background: rgba(255, 255, 255, 0.28);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 4px 2px 6px;
+    }
+
+    .electores-input-4b {
+      width: 38px;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .page-4b .ubigeo-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.5fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .page-4b .ubigeo-field label {
+      display: block;
+      font-size: 8.5px;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .page-4b .ubigeo-value {
+      border: 1px solid #444;
+      background: rgba(255, 255, 255, 0.22);
+      padding: 2px 4px 2px 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .page-4b .section-c-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .page-4b .letter-c {
+      border: 1.8px solid #1a1a1a;
+      width: 19px;
+      height: 19px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .page-4b .section-c-title {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .page-4b .intro-line {
+      font-size: 10.5px;
+      font-style: italic;
+      margin-bottom: 4px;
+    }
+
+    .page-4b .dotted-input {
+      border: none;
+      border-bottom: 1.3px dotted #222;
+      background: transparent;
+      width: 96px;
+      font-size: 11px;
+      font-weight: bold;
+      text-align: center;
+      outline: none;
+      color: #111;
+    }
+
+    .page-4b .important-line {
+      font-size: 9.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .page-4b .important-line strong {
+      font-style: italic;
+    }
+
+    .page-4b .sample-digits {
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      font-size: 15px;
+      letter-spacing: 3px;
+    }
+
+    /* Tabla de votos 4b */
+    .page-4b .table-wrapper {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .page-4b .vote-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .page-4b .vote-table th {
+      background-color: #a8a49c;
+      border: 1.2px solid #222;
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 4px 6px;
+      text-align: center;
+      letter-spacing: 0.4px;
+    }
+
+    .page-4b .vote-table th.votes-col-header {
+      font-size: 8px;
+      padding: 4px 2px;
+    }
+
+    .page-4b .vote-table td {
+      border: 1.1px solid #333;
+      vertical-align: middle;
+      height: 52px;
+    }
+
+    .page-4b .vote-table tr.shaded-row {
+      background-color: rgba(155, 152, 145, 0.35);
+    }
+
+    .page-4b .row-num-cell {
+      border: none !important;
+      width: 18px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      font-size: 9.5px;
+      font-weight: 900;
+      padding: 0 2px;
+    }
+
+    .page-4b .shaded-row .row-num-cell {
+      background-color: rgba(155, 152, 145, 0.35);
+    }
+
+    .page-4b .org-name {
+      padding: 4px 8px;
+    }
+
+    .org-name-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      color: #111;
+      outline: none;
+      padding: 3px 4px;
+    }
+
+    .org-name-input:focus {
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .page-4b .org-symbol {
+      width: 66px;
+      text-align: center;
+      padding: 4px;
+    }
+
+    .page-4b .special-row-label {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 4px 10px;
+    }
+
+    .page-4b .total-label-flex {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .auto-sum-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #0f172a;
+      color: #ffffff;
+      font-family: system-ui, sans-serif;
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .page-4b .digit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      height: 100%;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .page-4b .digit-grid input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-right: 0.8px solid #888;
+      background: transparent;
+      text-align: center;
+      font-family: "Courier New", monospace;
+      font-size: 21px;
+      font-weight: bold;
+      color: #111;
+      outline: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .page-4b .digit-grid input:focus {
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .page-4b .digit-grid input:last-child {
+      border-right: none;
+    }
+
+    /* Barra de suma automática y progreso en vivo */
+    .vote-reference {
+      margin: 0 18px 10px 18px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #94a3b8;
+      background: rgba(255, 255, 255, 0.65);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .vote-reference.is-progress {
+      background: #eff6ff;
+      border-color: #60a5fa;
+      color: #1e40af;
+    }
+
+    .vote-reference.is-match {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #166534;
+    }
+
+    .vote-reference.is-mismatch {
+      background: #fee2e2;
+      border-color: #dc2626;
+      color: #991b1b;
+    }
+
+    .vote-ref-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .vote-ref-action {
+      appearance: none;
+      border: 1px solid currentColor;
+      background: #ffffff;
+      color: inherit;
+      border-radius: 7px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .vote-ref-action:hover {
+      filter: brightness(0.95);
+    }
+
+    .vote-progress-track {
+      width: 100%;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.12);
+      overflow: hidden;
+    }
+
+    .vote-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: #2563eb;
+      transition: width 0.18s ease, background-color 0.18s ease;
+    }
+
+    .vote-reference.is-match .vote-progress-fill {
+      background: #16a34a;
+    }
+
+    .vote-reference.is-mismatch .vote-progress-fill {
+      background: #dc2626;
+    }
+
+    /* Observaciones 4b */
+    .page-4b .observations-box {
+      border: 1.2px solid #222;
+      margin: 0 18px 10px 18px;
+      padding: 6px 8px;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .page-4b .obs-header {
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 3px;
+    }
+
+    .page-4b .obs-textarea {
+      border: none;
+      background-color: transparent;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 16px,
+        rgba(50, 50, 50, 0.35) 16px,
+        rgba(50, 50, 50, 0.35) 17px
+      );
+      width: 100%;
+      min-height: 36px;
+      resize: vertical;
+      font-family: Arial, sans-serif;
+      font-size: 10.5px;
+      line-height: 17px;
+      color: #111;
+      outline: none;
+    }
+
+    .page-4b .closing-block {
+      margin: 0 18px 10px 18px;
+    }
+
+    .page-4b .closing-time {
+      font-size: 11px;
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+
+    .page-4b .citizens-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .page-4b .citizens-label {
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .page-4b .citizens-digits {
+      display: grid;
+      grid-template-columns: repeat(3, 24px);
+      height: 26px;
+      border: 1.2px solid #222;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .page-4b .citizens-digits input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-right: 0.8px solid #888;
+      background: transparent;
+      text-align: center;
+      font-family: "Courier New", monospace;
+      font-size: 15px;
+      font-weight: bold;
+      color: #111;
+      outline: none;
+    }
+
+    .page-4b .citizens-digits input:focus {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .page-4b .citizens-digits input:last-child {
+      border-right: none;
+    }
+
+    /* Firmas Miembros y Personeros 4b */
+    .page-4b .signatures-title {
+      font-family: Arial, sans-serif;
+      font-size: 9px;
+      font-weight: 900;
+      margin: 0 18px 5px 18px;
+    }
+
+    .page-4b .members-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 0 18px 12px 18px;
+    }
+
+    .page-4b .member-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-4b .sig-box {
+      border: 1px solid #333;
+      height: 54px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .page-4b .role-bar {
+      background-color: #b4b0a7;
+      border: 1px solid #333;
+      border-top: none;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      font-size: 8px;
+      font-weight: 900;
+      padding: 2px 0;
+      margin-bottom: 5px;
+    }
+
+    .page-4b .field-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 5px;
+      font-size: 7px;
+      font-weight: bold;
+    }
+
+    .page-4b .field-line input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      border-bottom: 0.8px solid #444;
+      background: transparent;
+      font-size: 9px;
+      color: #111;
+      outline: none;
+      padding: 2px;
+    }
+
+    .page-4b .field-line input:focus {
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .page-4b .dni-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 7px;
+      font-weight: bold;
+    }
+
+    .page-4b .dni-cells {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      min-width: 0;
+    }
+
+    .page-4b .dni-cells input {
+      width: 100%;
+      border: none;
+      border-bottom: 0.8px solid #444;
+      border-right: 0.7px solid #555;
+      height: 18px;
+      background: transparent;
+      text-align: center;
+      font-family: "Courier New", monospace;
+      font-size: 10px;
+      font-weight: bold;
+      color: #111;
+      outline: none;
+    }
+
+    .page-4b .dni-cells input:focus {
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .page-4b .dni-cells input:last-child {
+      border-right: none;
+    }
+
+    .page-4b .personeros-title {
+      font-family: Arial, sans-serif;
+      font-size: 8.5px;
+      font-weight: 900;
+      margin: 4px 18px 8px 18px;
+    }
+
+    .page-4b .personeros-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 0.6fr;
+      gap: 14px;
+      margin: 0 18px;
+    }
+
+    .page-4b .personero-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-4b .personero-sig-line {
+      height: 28px;
+      border-bottom: 0.9px solid #333;
+      margin-bottom: 2px;
+    }
+
+    .page-4b .personero-label {
+      text-align: center;
+      font-size: 6.5px;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    /* =========================================================================
+       8. DISEÑO RESPONSIVO PARA MÓVIL (<= 760px)
+       ========================================================================= */
+    @media (max-width: 760px) {
+      .zoom-group {
+        display: none !important;
+      }
+
+      .ops-topbar {
+        padding: 6px 8px;
+      }
+
+      .autosave-pill {
+        padding: 4px 8px;
+        font-size: 10.5px;
+      }
+
+      .validation-rules-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .issues-popover {
+        position: fixed;
+        top: 56px;
+        left: 4vw;
+        right: 4vw;
+        width: 92vw;
+        max-height: 62vh;
+      }
+
+      .viewer-stage {
+        padding: 10px 8px 28px !important;
+        overflow-x: hidden !important;
+        display: block !important;
+      }
+
+      .scale-wrapper {
+        width: 100% !important;
+        height: auto !important;
+      }
+
+      .pages-stack {
+        position: relative !important;
+        left: auto !important;
+        margin: 0 !important;
+        width: 100% !important;
+        transform: none !important;
+        gap: 14px !important;
+        align-items: stretch !important;
+      }
+
+      .paper-sheet,
+      .page-4a,
+      .page-4b {
+        width: 100% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        padding: 16px 12px !important;
+      }
+
+      .page-4a .fiducial,
+      .page-4b .reg-mark {
+        display: none;
+      }
+
+      .page-4a .header-4a,
+      .page-4b .titles-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .page-4a .header-left,
+      .page-4a .header-right,
+      .page-4b .electores-wrap {
+        align-items: flex-start;
+      }
+
+      .page-4a .header-center,
+      .page-4b .center-titles {
+        text-align: left;
+      }
+
+      .page-4a .ubigeo-row,
+      .page-4b .ubigeo-row {
+        grid-template-columns: 1fr;
+      }
+
+      .page-4a .sections-grid {
+        grid-template-columns: 1fr !important;
+        padding: 0;
+      }
+
+      .page-4a .quantity-content {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .page-4a .members-grid,
+      .page-4a .personeros-grid,
+      .page-4b .members-grid,
+      .page-4b .personeros-grid {
+        grid-template-columns: 1fr;
+        margin-left: 0;
+        margin-right: 0;
+        gap: 10px;
+      }
+
+      .page-4a .member-card,
+      .page-4a .personero-card,
+      .page-4b .member-card,
+      .page-4b .personero-card {
+        padding: 8px;
+        border: 1px solid #c5bfb2;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .page-4a .field-line,
+      .page-4b .field-line {
+        font-size: 9.5px;
+      }
+
+      .page-4a .field-line input,
+      .page-4b .field-line input {
+        min-height: 32px;
+        font-size: 13px;
+      }
+
+      .page-4a .dni-cells input,
+      .page-4b .dni-cells input {
+        height: 32px;
+        font-size: 13px;
+      }
+
+      .verify-btn.size-inline,
+      .verify-btn.size-block {
+        width: 34px;
+        height: 34px;
+        font-size: 17px;
+      }
+
+      .page-4b .table-wrapper {
+        overflow-x: auto;
+      }
+
+      .page-4b .vote-table {
+        min-width: 470px;
+      }
+
+      .vote-reference,
+      .page-4b .observations-box,
+      .page-4b .closing-block,
+      .page-4b .signatures-title,
+      .page-4b .personeros-title {
+        margin-left: 0;
+        margin-right: 0;
+      }
+    }
+
+    /* =========================================================================
+       9. IMPRESIÓN A4 (4a HORIZONTAL / 4b VERTICAL)
+       ========================================================================= */
+    @page landscape-page {
+      size: A4 landscape;
+      margin: 0;
+    }
+
+    @page portrait-page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    @media print {
+      html, body {
+        background: none !important;
+        overflow: visible !important;
+      }
+
+      .ops-header,
+      .toast,
+      .modal-backdrop,
+      .verify-btn,
+      .verify-row,
+      .material-verify-row,
+      .time-inline-icon,
+      .vote-reference,
+      .inline-field-alert,
+      .auto-sum-tag {
+        display: none !important;
+      }
+
+      .viewer-stage {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: auto !important;
+        display: block !important;
+        overflow: visible !important;
+      }
+
+      .scale-wrapper {
+        width: auto !important;
+        height: auto !important;
+      }
+
+      .pages-stack {
+        position: static !important;
+        transform: none !important;
+        margin: 0 !important;
+        width: auto !important;
+        display: block !important;
+      }
+
+      body[data-tab] #page4a,
+      body[data-tab] #page4b {
+        display: flex !important;
+      }
+
+      body[data-tab] #page4a .sections-grid {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      body[data-tab] #page4a .section-box {
+        display: flex !important;
+      }
+
+      .paper-sheet {
+        box-shadow: none !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .page-4a {
+        page: landscape-page;
+        width: 297mm !important;
+        min-height: 210mm !important;
+        border: none !important;
+        page-break-after: always;
+        break-after: page;
+      }
+
+      .page-4b {
+        page: portrait-page;
+        width: 210mm !important;
+        min-height: 297mm !important;
+        border: none !important;
+      }
+    }
+  </style>
+</head>
+<body data-tab="a">
+  <!-- =========================================================================
+       CABECERA OPERATIVA COMPACTA (ESTADO, 4 REGLAS, TIRA DE MESAS, PESTAÑAS)
+       ========================================================================= -->
+  <header class="ops-header" id="opsHeader">
+    <!-- Fila 1: Estado, Control de errores, Guardado offline, Zoom, Imprimir -->
+    <div class="ops-topbar">
+      <div class="topbar-left">
+        <span class="status-chip" id="globalStatus" data-state="pending">INCOMPLETA</span>
+
+        <div class="issues-popover-wrap">
+          <button type="button" class="top-btn" id="btnIssuesToggle" aria-expanded="false" aria-controls="issuesPopover">
+            Control de errores <span class="pill-count" id="issueCount">0</span>
+          </button>
+          <div class="issues-popover" id="issuesPopover" role="region" aria-label="Detalle de errores y pendientes">
+            <div class="issues-popover-head">
+              <strong>Control de errores del acta</strong>
+              <div class="issues-counts-bar" id="issuesCountsBar"></div>
+            </div>
+            <div class="issues-body" id="issuesList">
+              <p>Completa los campos directamente en el acta para iniciar la revisión.</p>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="autosave-pill" id="autosaveBadge" data-save-state="saved" title="Guardado automático local (funciona sin conexión)">
+          <span class="autosave-dot" aria-hidden="true"></span>
+          <span id="autosaveText">Guardado local</span>
+        </button>
+      </div>
+
+      <div class="topbar-right">
+        <div class="zoom-group" aria-label="Controles de zoom">
+          <button type="button" class="top-btn zoom-icon-btn" id="btnZoomOut" title="Reducir zoom" aria-label="Reducir zoom">−</button>
+          <span class="zoom-readout" id="zoomReadout">100%</span>
+          <button type="button" class="top-btn zoom-icon-btn" id="btnZoomIn" title="Aumentar zoom" aria-label="Aumentar zoom">+</button>
+          <button type="button" class="top-btn" id="btnFitPage" title="Ajustar hoja completa">Ajustar</button>
+          <button type="button" class="top-btn active" id="btnFitWidth" title="Ajustar al ancho">Ancho</button>
+        </div>
+
+        <button type="button" class="top-btn top-btn-danger" id="btnResetTop" title="Reiniciar únicamente la mesa activa">Reiniciar</button>
+        <button type="button" class="top-btn top-btn-primary" id="btnPrint" title="Imprimir o guardar en PDF">Imprimir</button>
+      </div>
+    </div>
+
+    <!-- Fila 1B: Control de errores automático en tiempo real (4 reglas) -->
+    <div class="validation-strip" id="validationStrip" aria-label="Validación automática en tiempo real">
+      <div class="validation-rules-row">
+        <button type="button" class="rule-pill" id="ruleCedulas" data-rule-state="pending">
+          <span class="rule-pill-icon" aria-hidden="true">○</span>
+          <span class="rule-pill-text">
+            <span class="rule-pill-title">Cuadre cédulas</span>
+            <span class="rule-pill-detail">Pendiente</span>
+          </span>
+        </button>
+        <button type="button" class="rule-pill" id="ruleTope" data-rule-state="pending">
+          <span class="rule-pill-icon" aria-hidden="true">○</span>
+          <span class="rule-pill-text">
+            <span class="rule-pill-title">Tope electores</span>
+            <span class="rule-pill-detail">Pendiente</span>
+          </span>
+        </button>
+        <button type="button" class="rule-pill" id="ruleSufragioEscrutinio" data-rule-state="pending">
+          <span class="rule-pill-icon" aria-hidden="true">○</span>
+          <span class="rule-pill-text">
+            <span class="rule-pill-title">Sufragio vs. Escrut.</span>
+            <span class="rule-pill-detail">Pendiente</span>
+          </span>
+        </button>
+        <button type="button" class="rule-pill" id="ruleHorarios" data-rule-state="pending">
+          <span class="rule-pill-icon" aria-hidden="true">○</span>
+          <span class="rule-pill-text">
+            <span class="rule-pill-title">Coherencia horaria</span>
+            <span class="rule-pill-detail">Pendiente</span>
+          </span>
+        </button>
+      </div>
+      <div class="validation-alerts-bar" id="validationAlertsBar" role="alert" hidden></div>
+    </div>
+
+    <!-- Fila 2: Tira compacta de navegación rápida de mesas -->
+    <div class="mesa-strip" aria-label="Navegación de mesas">
+      <div class="mesa-pager">
+        <button type="button" class="pager-btn" id="btnPrevMesa" title="Mesa anterior" aria-label="Mesa anterior">‹</button>
+        <span class="pager-counter" id="mesaCounter">1 / 1</span>
+        <button type="button" class="pager-btn" id="btnNextMesa" title="Mesa siguiente" aria-label="Mesa siguiente">›</button>
+      </div>
+
+      <div class="mesa-chips-scroll" id="mesaChipsList" role="list" aria-label="Lista de mesas"></div>
+
+      <div class="mesa-strip-actions">
+        <button type="button" class="btn-new-mesa" id="btnNewMesa" title="Crear una nueva mesa">＋ Nueva mesa</button>
+        <button type="button" class="btn-del-mesa" id="btnDeleteMesa" title="Eliminar mesa activa" aria-label="Eliminar mesa activa" hidden>✕</button>
+      </div>
+    </div>
+
+    <!-- Fila 3: Pestañas A / B / C -->
+    <nav class="tab-bar" role="tablist" aria-label="Secciones del acta electoral">
+      <button type="button" role="tab" aria-selected="true" class="tab-btn active" data-tab="a">
+        <span>A · Instalación</span>
+        <span class="tab-badge" id="tabBadgeA">•</span>
+      </button>
+      <button type="button" role="tab" aria-selected="false" class="tab-btn" data-tab="b">
+        <span>B · Sufragio</span>
+        <span class="tab-badge" id="tabBadgeB">•</span>
+      </button>
+      <button type="button" role="tab" aria-selected="false" class="tab-btn" data-tab="c">
+        <span>C · Escrutinio</span>
+        <span class="tab-badge" id="tabBadgeC">•</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Notificación temporal -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Modal personalizado: Confirmar reinicio de mesa -->
+  <div class="modal-backdrop" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
+    <div class="modal-card">
+      <h3 id="resetModalTitle">Reiniciar mesa activa</h3>
+      <p id="resetModalText">¿Deseas borrar todos los datos y verificaciones de esta mesa? Las demás mesas guardadas se conservarán intactas.</p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn" id="btnCancelReset">Cancelar</button>
+        <button type="button" class="modal-btn modal-btn-danger" id="btnConfirmReset">Sí, reiniciar mesa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal personalizado: Confirmar eliminación de mesa -->
+  <div class="modal-backdrop" id="deleteMesaModal" role="dialog" aria-modal="true" aria-labelledby="deleteMesaTitle">
+    <div class="modal-card">
+      <h3 id="deleteMesaTitle">Eliminar mesa</h3>
+      <p id="deleteMesaText">¿Deseas eliminar esta mesa de la lista? Esta acción no se puede deshacer.</p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn" id="btnCancelDeleteMesa">Cancelar</button>
+        <button type="button" class="modal-btn modal-btn-danger" id="btnConfirmDeleteMesa">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ESCENARIO DE VISTA PREVIA DEL ACTA OFICIAL (4a y 4b)
+       ========================================================================= -->
+  <main class="viewer-stage" id="viewerStage">
+    <div class="scale-wrapper" id="scaleWrapper">
+      <div class="pages-stack" id="pagesStack">
+
+        <!-- ===============================================================
+             HOJA 1: FORMULARIO 4a (INSTALACIÓN Y SUFRAGIO)
+             =============================================================== -->
+        <section class="paper-sheet page-4a" id="page4a" aria-label="Formulario 4a - Acta de Instalación y Sufragio">
+          <span class="fiducial fid-tl-1"></span>
+          <span class="fiducial fid-tl-2"></span>
+          <span class="fiducial fid-tr"></span>
+          <span class="fiducial fid-bl"></span>
+          <span class="fiducial fid-br"></span>
+
+          <header class="header-4a">
+            <div class="header-left">
+              <div class="logo-qr-row">
+                <div class="onpe-brand">
+                  <svg width="34" height="38" viewBox="0 0 60 66" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Escudo">
+                    <path d="M12 12 C12 4, 48 4, 48 12 L46 38 C46 52, 30 60, 30 60 C30 60, 14 52, 14 38 Z" fill="#222"/>
+                    <path d="M17 15 H43 V36 C43 47, 30 54, 30 54 C30 54, 17 47, 17 36 Z" fill="#e9e4d7"/>
+                    <line x1="30" y1="15" x2="30" y2="33" stroke="#222" stroke-width="2"/>
+                    <line x1="17" y1="33" x2="43" y2="33" stroke="#222" stroke-width="2"/>
+                    <circle cx="23.5" cy="24" r="3.5" fill="#222"/>
+                    <circle cx="36.5" cy="24" r="3.5" fill="#222"/>
+                    <path d="M23 41 Q30 48 37 41" stroke="#222" stroke-width="2.5" fill="none"/>
+                  </svg>
+                  <div style="text-align:center;">
+                    <svg width="38" height="15" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ONPE">
+                      <path d="M8 18 L18 6 L26 16 L36 8 L46 18" stroke="#1a1a1a" stroke-width="2.4" fill="none"/>
+                      <circle cx="29" cy="6" r="2.2" fill="#1a1a1a"/>
+                    </svg>
+                    <div class="onpe-text">ONPE</div>
+                  </div>
+                </div>
+
+                <svg width="42" height="42" viewBox="0 0 29 29" xmlns="http://www.w3.org/2000/svg" aria-label="Código QR">
+                  <path fill="#1a1a1a" d="M0,0 h7 v7 h-7 z M1,1 v5 h5 v-5 z M2,2 h3 v3 h-3 z
+                    M22,0 h7 v7 h-7 z M23,1 v5 h5 v-5 z M24,2 h3 v3 h-3 z
+                    M0,22 h7 v7 h-7 z M1,23 v5 h5 v-5 z M2,24 h3 v3 h-3 z
+                    M9,1 h2 v2 h-2 z M13,1 h3 v2 h-3 z M18,1 h2 v3 h-2 z
+                    M9,5 h3 v2 h-3 z M14,5 h2 v4 h-2 z M17,6 h3 v2 h-3 z
+                    M1,9 h4 v2 h-4 z M7,9 h3 v3 h-3 z M12,9 h2 v2 h-2 z M16,9 h4 v2 h-4 z M22,9 h3 v2 h-3 z M26,9 h3 v3 h-3 z
+                    M2,13 h3 v2 h-3 z M8,13 h4 v3 h-4 z M14,13 h3 v2 h-3 z M19,13 h2 v4 h-2 z M23,13 h4 v2 h-4 z
+                    M1,17 h2 v3 h-2 z M5,17 h3 v2 h-3 z M10,17 h4 v2 h-4 z M16,17 h2 v3 h-2 z M22,17 h3 v3 h-3 z M26,17 h2 v2 h-2 z
+                    M9,21 h2 v3 h-2 z M13,21 h4 v2 h-4 z M19,21 h2 v2 h-2 z M24,21 h4 v2 h-4 z
+                    M10,25 h3 v3 h-3 z M15,24 h3 v4 h-3 z M20,25 h4 v3 h-4 z M26,25 h3 v3 h-3 z"/>
+                </svg>
+              </div>
+
+              <div>
+                <span class="small-label">MESA DE SUFRAGIO N.°</span>
+                <div class="mesa-box" data-header-box="mesa">
+                  <input type="text" class="paper-inline-input mesa-input-4a" data-header-field="mesa" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" aria-label="Número de mesa (6 dígitos)" />
+                  <button type="button" class="verify-btn size-inline" data-verify-key="header.mesa" data-required="true" data-label="Número de mesa">○</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="header-center">
+              <div class="election-subtitle">
+                ELECCIONES REGIONALES 2026<br />
+                SEGUNDA ELECCIÓN PARA GOBERNADOR Y VICEGOBERNADOR REGIONAL
+              </div>
+              <h1 class="main-title">ACTA ELECTORAL</h1>
+            </div>
+
+            <div class="header-right">
+              <div class="barcode-row">
+                <div class="barcode-wrap">
+                  <svg width="110" height="20" viewBox="0 0 115 22" xmlns="http://www.w3.org/2000/svg" aria-label="Código de barras">
+                    <g fill="#1a1a1a">
+                      <rect x="0" y="0" width="2" height="22"/><rect x="4" y="0" width="1" height="22"/>
+                      <rect x="7" y="0" width="3" height="22"/><rect x="12" y="0" width="1" height="22"/>
+                      <rect x="15" y="0" width="2" height="22"/><rect x="19" y="0" width="1" height="22"/>
+                      <rect x="22" y="0" width="3" height="22"/><rect x="27" y="0" width="2" height="22"/>
+                      <rect x="31" y="0" width="1" height="22"/><rect x="34" y="0" width="2" height="22"/>
+                      <rect x="38" y="0" width="3" height="22"/><rect x="43" y="0" width="1" height="22"/>
+                      <rect x="46" y="0" width="2" height="22"/><rect x="50" y="0" width="2" height="22"/>
+                      <rect x="54" y="0" width="1" height="22"/><rect x="57" y="0" width="3" height="22"/>
+                      <rect x="62" y="0" width="1" height="22"/><rect x="65" y="0" width="2" height="22"/>
+                      <rect x="69" y="0" width="1" height="22"/><rect x="72" y="0" width="3" height="22"/>
+                      <rect x="77" y="0" width="2" height="22"/><rect x="81" y="0" width="1" height="22"/>
+                      <rect x="84" y="0" width="2" height="22"/><rect x="88" y="0" width="3" height="22"/>
+                      <rect x="93" y="0" width="1" height="22"/><rect x="96" y="0" width="2" height="22"/>
+                      <rect x="100" y="0" width="1" height="22"/><rect x="103" y="0" width="3" height="22"/>
+                      <rect x="108" y="0" width="2" height="22"/><rect x="112" y="0" width="2" height="22"/>
+                    </g>
+                  </svg>
+                  <div class="barcode-text">000000-01-K</div>
+                </div>
+                <div class="form-code">4a</div>
+              </div>
+
+              <div class="electores-row">
+                <svg class="arrow-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0 5 H11 V1 L20 7 L11 13 V9 H0 Z" fill="#1a1a1a"/>
+                </svg>
+                <span class="electores-label">TOTAL DE ELECTORES HÁBILES</span>
+                <div class="electores-box" data-header-box="electores">
+                  <input type="text" class="paper-inline-input electores-input-4a" data-header-field="electores" inputmode="numeric" maxlength="3" placeholder="300" autocomplete="off" aria-label="Total de electores hábiles" />
+                  <button type="button" class="verify-btn size-inline" data-verify-key="header.electores" data-required="true" data-label="Electores hábiles">○</button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <!-- Ubigeo 4a editable directamente -->
+          <div class="ubigeo-row">
+            <div>
+              <span class="small-label">DEPARTAMENTO</span>
+              <div class="ubigeo-field" data-header-box="departamento">
+                <input type="text" class="paper-inline-input ubigeo-input" data-header-field="departamento" placeholder="DEPARTAMENTO" autocomplete="off" aria-label="Departamento" />
+                <button type="button" class="verify-btn size-inline" data-verify-key="header.departamento" data-required="true" data-label="Departamento">○</button>
+              </div>
+            </div>
+            <div>
+              <span class="small-label">PROVINCIA</span>
+              <div class="ubigeo-field" data-header-box="provincia">
+                <input type="text" class="paper-inline-input ubigeo-input" data-header-field="provincia" placeholder="PROVINCIA" autocomplete="off" aria-label="Provincia" />
+                <button type="button" class="verify-btn size-inline" data-verify-key="header.provincia" data-required="true" data-label="Provincia">○</button>
+              </div>
+            </div>
+            <div>
+              <span class="small-label">DISTRITO</span>
+              <div class="ubigeo-field" data-header-box="distrito">
+                <input type="text" class="paper-inline-input ubigeo-input" data-header-field="distrito" placeholder="DISTRITO" autocomplete="off" aria-label="Distrito" />
+                <button type="button" class="verify-btn size-inline" data-verify-key="header.distrito" data-required="true" data-label="Distrito">○</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sections-grid">
+            <!-- ==================== SECCIÓN A: ACTA DE INSTALACIÓN ==================== -->
+            <article class="section-box" data-section="A">
+              <div>
+                <div class="section-header">
+                  <div class="letter-badge">A</div>
+                  <h2 class="section-title">ACTA DE INSTALACIÓN</h2>
+                </div>
+
+                <p class="install-text">
+                  Siendo las
+                  <span class="time-inline-wrap" data-time-wrap="install">
+                    <input type="text" class="dotted-input" data-time-display="install" placeholder="__:__" readonly aria-label="Hora de instalación" />
+                    <span class="time-inline-icon" aria-hidden="true">🕒</span>
+                    <input type="time" class="time-native-overlay" data-time-slot="install" aria-label="Seleccionar hora de instalación" />
+                  </span>
+                  del 6 de diciembre de 2026, se conformó e instaló la mesa de sufragio y, a continuación, se revisó el material electoral recibido. El material se recibió en buen estado:
+                  <span class="checkbox-group" role="group" aria-label="¿Material en buen estado?">
+                    <button type="button" class="yn-btn" data-yn="si" aria-pressed="false">SÍ</button>
+                    <button type="button" class="yn-btn" data-yn="no" aria-pressed="false">NO</button>
+                  </span>
+                  <span class="material-verify-row">
+                    <span>Verificar</span>
+                    <button type="button" class="verify-btn size-block" data-verify-key="A.material" data-required="true" data-label="estado del material electoral">○</button>
+                  </span>
+                </p>
+
+                <div class="quantity-box">
+                  <div class="quantity-title">CANTIDAD DE CÉDULAS DE SUFRAGIO RECIBIDAS</div>
+                  <div class="quantity-content">
+                    <div class="letters-wrap">
+                      <div class="letters-line">
+                        <svg class="arrow-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M0 5 H11 V1 L20 7 L11 13 V9 H0 Z" fill="#1a1a1a"/>
+                        </svg>
+                        <input type="text" class="letters-input" data-words-key="received" readonly aria-label="Cédulas recibidas en letras" />
+                        <button type="button" class="verify-btn size-block" data-verify-key="words.received" data-required="true" data-label="texto en letras de cédulas recibidas">○</button>
+                      </div>
+                      <span class="sub-caption">(en letras)</span>
+                    </div>
+                    <div class="digits-wrap">
+                      <div class="digit-grid digit-group" data-number-key="received">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Cédulas recibidas centenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Cédulas recibidas decenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Cédulas recibidas unidades" />
+                      </div>
+                      <span class="sub-caption">(en números)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="observations-4a" data-obs-section="A">
+                  <span class="obs-label">OBSERVACIONES:</span>
+                  <textarea class="obs-textarea" rows="3" data-persist-key="obs-A" aria-label="Observaciones instalación"></textarea>
+                  <div class="verify-row">
+                    <span>Revisión visual de observaciones (A)</span>
+                    <button type="button" class="verify-btn size-block" data-verify-key="A.observations" data-required="true" data-label="observaciones de la sección A">○</button>
+                  </div>
+                </div>
+
+                <div class="members-title">FIRMA, NOMBRES, APELLIDOS Y DNI DE LOS MIEMBROS DE MESA (OBLIGATORIO)</div>
+                <div class="members-grid" data-members-host="A"></div>
+              </div>
+
+              <div class="personeros-section">
+                <div class="members-title">FIRMA Y DATOS DE LOS PERSONEROS</div>
+                <div class="personeros-grid" data-personeros-host="A"></div>
+              </div>
+            </article>
+
+            <!-- ==================== SECCIÓN B: ACTA DE SUFRAGIO ==================== -->
+            <article class="section-box" data-section="B">
+              <div>
+                <div class="section-header">
+                  <div class="letter-badge">B</div>
+                  <h2 class="section-title">ACTA DE SUFRAGIO</h2>
+                </div>
+
+                <div class="quantity-box">
+                  <div class="quantity-title">TOTAL DE CIUDADANOS QUE VOTARON</div>
+                  <div class="quantity-content">
+                    <div class="letters-wrap">
+                      <div class="letters-line">
+                        <svg class="arrow-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M0 5 H11 V1 L20 7 L11 13 V9 H0 Z" fill="#1a1a1a"/>
+                        </svg>
+                        <input type="text" class="letters-input" data-words-key="voters" readonly aria-label="Total ciudadanos que votaron en letras" />
+                        <button type="button" class="verify-btn size-block" data-verify-key="words.voters" data-required="true" data-label="texto en letras de ciudadanos que votaron">○</button>
+                      </div>
+                      <span class="sub-caption">(en letras)</span>
+                    </div>
+                    <div class="digits-wrap">
+                      <div class="digit-grid digit-group" data-number-key="voters">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Ciudadanos que votaron centenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Ciudadanos que votaron decenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Ciudadanos que votaron unidades" />
+                      </div>
+                      <span class="sub-caption">(en números)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="inline-field-alert" id="sufragioCrossAlert" hidden></div>
+
+                <div class="quantity-box">
+                  <div class="quantity-title">TOTAL DE CÉDULAS NO UTILIZADAS</div>
+                  <div class="quantity-content">
+                    <div class="letters-wrap">
+                      <div class="letters-line">
+                        <svg class="arrow-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M0 5 H11 V1 L20 7 L11 13 V9 H0 Z" fill="#1a1a1a"/>
+                        </svg>
+                        <input type="text" class="letters-input" data-words-key="unused" readonly aria-label="Total cédulas no utilizadas en letras" />
+                        <button type="button" class="verify-btn size-block" data-verify-key="words.unused" data-required="true" data-label="texto en letras de cédulas no utilizadas">○</button>
+                      </div>
+                      <span class="sub-caption">(en letras)</span>
+                    </div>
+                    <div class="digits-wrap">
+                      <div class="digit-grid-dashed-outer">
+                        <div class="digit-grid digit-group" data-number-key="unused">
+                          <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Cédulas no utilizadas centenas" />
+                          <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Cédulas no utilizadas decenas" />
+                          <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Cédulas no utilizadas unidades" />
+                        </div>
+                      </div>
+                      <span class="sub-caption">(en números)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="observations-4a" data-obs-section="B" style="margin-bottom: 4px;">
+                  <span class="obs-label">OBSERVACIONES:</span>
+                  <textarea class="obs-textarea" rows="2" data-persist-key="obs-B" aria-label="Observaciones sufragio"></textarea>
+                  <div class="verify-row">
+                    <span>Revisión visual de observaciones (B)</span>
+                    <button type="button" class="verify-btn size-block" data-verify-key="B.observations" data-required="true" data-label="observaciones de la sección B">○</button>
+                  </div>
+                </div>
+
+                <p class="sufragio-end">
+                  Siendo las
+                  <span class="time-inline-wrap" data-time-wrap="sufragioEnd">
+                    <input type="text" class="dotted-input" data-time-display="sufragioEnd" placeholder="__:__" readonly aria-label="Hora de finalización del sufragio" />
+                    <span class="time-inline-icon" aria-hidden="true">🕒</span>
+                    <input type="time" class="time-native-overlay" data-time-slot="sufragioEnd" aria-label="Seleccionar hora de finalización del sufragio" />
+                  </span>
+                  finalizó el sufragio.
+                </p>
+
+                <div class="members-title">FIRMA, NOMBRES, APELLIDOS Y DNI DE LOS MIEMBROS DE MESA (OBLIGATORIO)</div>
+                <div class="members-grid" data-members-host="B"></div>
+              </div>
+
+              <div class="personeros-section">
+                <div class="members-title">FIRMA Y DATOS DE LOS PERSONEROS</div>
+                <div class="personeros-grid" data-personeros-host="B"></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ===============================================================
+             HOJA 2: FORMULARIO 4b (ACTA DE ESCRUTINIO)
+             =============================================================== -->
+        <section class="paper-sheet page-4b" id="page4b" aria-label="Formulario 4b - Acta de Escrutinio">
+          <span class="reg-mark rm-tl1"></span>
+          <span class="reg-mark rm-tl2"></span>
+          <span class="reg-mark rm-tm"></span>
+          <span class="reg-mark rm-tr1"></span>
+          <span class="reg-mark rm-tr2"></span>
+          <span class="reg-mark rm-tr3"></span>
+          <span class="reg-mark rm-ml1"></span>
+          <span class="reg-mark rm-ml2"></span>
+          <span class="reg-mark rm-ml3"></span>
+          <span class="reg-mark rm-mr1"></span>
+          <span class="reg-mark rm-mr2"></span>
+          <span class="reg-mark rm-mr3"></span>
+
+          <div>
+            <div class="top-bar">
+              <div class="logos-left">
+                <div class="onpe-brand">
+                  <svg width="36" height="40" viewBox="0 0 60 66" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Escudo">
+                    <path d="M12 12 C12 4, 48 4, 48 12 L46 38 C46 52, 30 60, 30 60 C30 60, 14 52, 14 38 Z" fill="#222"/>
+                    <path d="M17 15 H43 V36 C43 47, 30 54, 30 54 C30 54, 17 47, 17 36 Z" fill="#e9e4d7"/>
+                    <line x1="30" y1="15" x2="30" y2="33" stroke="#222" stroke-width="2"/>
+                    <line x1="17" y1="33" x2="43" y2="33" stroke="#222" stroke-width="2"/>
+                    <circle cx="23.5" cy="24" r="3.5" fill="#222"/>
+                    <circle cx="36.5" cy="24" r="3.5" fill="#222"/>
+                    <path d="M23 41 Q30 48 37 41" stroke="#222" stroke-width="2.5" fill="none"/>
+                  </svg>
+                  <div style="text-align:center;">
+                    <svg width="38" height="16" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ONPE">
+                      <path d="M8 18 L18 6 L26 16 L36 8 L46 18" stroke="#1a1a1a" stroke-width="2.4" fill="none"/>
+                      <circle cx="29" cy="6" r="2.2" fill="#1a1a1a"/>
+                    </svg>
+                    <div class="onpe-text">ONPE</div>
+                  </div>
+                </div>
+
+                <svg class="qr-box" viewBox="0 0 29 29" xmlns="http://www.w3.org/2000/svg" aria-label="Código QR">
+                  <rect width="29" height="29" fill="none"/>
+                  <path fill="#1a1a1a" d="M0,0 h7 v7 h-7 z M1,1 v5 h5 v-5 z M2,2 h3 v3 h-3 z
+                    M22,0 h7 v7 h-7 z M23,1 v5 h5 v-5 z M24,2 h3 v3 h-3 z
+                    M0,22 h7 v7 h-7 z M1,23 v5 h5 v-5 z M2,24 h3 v3 h-3 z
+                    M9,1 h2 v2 h-2 z M13,1 h3 v2 h-3 z M18,1 h2 v3 h-2 z
+                    M9,5 h3 v2 h-3 z M14,5 h2 v4 h-2 z M17,6 h3 v2 h-3 z
+                    M1,9 h4 v2 h-4 z M7,9 h3 v3 h-3 z M12,9 h2 v2 h-2 z M16,9 h4 v2 h-4 z M22,9 h3 v2 h-3 z M26,9 h3 v3 h-3 z
+                    M2,13 h3 v2 h-3 z M8,13 h4 v3 h-4 z M14,13 h3 v2 h-3 z M19,13 h2 v4 h-2 z M23,13 h4 v2 h-4 z
+                    M1,17 h2 v3 h-2 z M5,17 h3 v2 h-3 z M10,17 h4 v2 h-4 z M16,17 h2 v3 h-2 z M22,17 h3 v3 h-3 z M26,17 h2 v2 h-2 z
+                    M9,21 h2 v3 h-2 z M13,21 h4 v2 h-4 z M19,21 h2 v2 h-2 z M24,21 h4 v2 h-4 z
+                    M10,25 h3 v3 h-3 z M15,24 h3 v4 h-3 z M20,25 h4 v3 h-4 z M26,25 h3 v3 h-3 z"/>
+                </svg>
+              </div>
+
+              <div class="barcode-section">
+                <svg width="115" height="22" viewBox="0 0 115 22" xmlns="http://www.w3.org/2000/svg" aria-label="Código de barras">
+                  <g fill="#1a1a1a">
+                    <rect x="0" y="0" width="2" height="22"/><rect x="4" y="0" width="1" height="22"/>
+                    <rect x="7" y="0" width="3" height="22"/><rect x="12" y="0" width="1" height="22"/>
+                    <rect x="15" y="0" width="2" height="22"/><rect x="19" y="0" width="1" height="22"/>
+                    <rect x="22" y="0" width="3" height="22"/><rect x="27" y="0" width="2" height="22"/>
+                    <rect x="31" y="0" width="1" height="22"/><rect x="34" y="0" width="2" height="22"/>
+                    <rect x="38" y="0" width="3" height="22"/><rect x="43" y="0" width="1" height="22"/>
+                    <rect x="46" y="0" width="2" height="22"/><rect x="50" y="0" width="2" height="22"/>
+                    <rect x="54" y="0" width="1" height="22"/><rect x="57" y="0" width="3" height="22"/>
+                    <rect x="62" y="0" width="1" height="22"/><rect x="65" y="0" width="2" height="22"/>
+                    <rect x="69" y="0" width="1" height="22"/><rect x="72" y="0" width="3" height="22"/>
+                    <rect x="77" y="0" width="2" height="22"/><rect x="81" y="0" width="1" height="22"/>
+                    <rect x="84" y="0" width="2" height="22"/><rect x="88" y="0" width="3" height="22"/>
+                    <rect x="93" y="0" width="1" height="22"/><rect x="96" y="0" width="2" height="22"/>
+                    <rect x="100" y="0" width="1" height="22"/><rect x="103" y="0" width="3" height="22"/>
+                    <rect x="108" y="0" width="2" height="22"/><rect x="112" y="0" width="2" height="22"/>
+                  </g>
+                </svg>
+                <div class="barcode-code">000000-01-K</div>
+              </div>
+
+              <div class="form-code">4b</div>
+            </div>
+
+            <div class="titles-row">
+              <div class="mesa-box-wrap">
+                <div class="mesa-label">MESA DE SUFRAGIO N.°</div>
+                <div class="mesa-number" data-header-box="mesa">
+                  <input type="text" class="paper-inline-input mesa-input-4b" data-header-field="mesa" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="off" aria-label="Número de mesa (6 dígitos)" />
+                  <button type="button" class="verify-btn size-inline" data-verify-key="header.mesa" data-required="true" data-label="Número de mesa">○</button>
+                </div>
+              </div>
+
+              <div class="center-titles">
+                <div class="t1">ELECCIONES REGIONALES 2026</div>
+                <div class="t2">SEGUNDA ELECCIÓN PARA GOBERNADOR Y VICEGOBERNADOR REGIONAL</div>
+                <div class="t3">ACTA ELECTORAL</div>
+              </div>
+
+              <div class="electores-wrap">
+                <div class="electores-label">
+                  <svg class="arrow-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 5 H11 V1 L20 7 L11 13 V9 H0 Z" fill="#1a1a1a"/>
+                  </svg>
+                  TOTAL DE ELECTORES HÁBILES
+                </div>
+                <div class="electores-box" data-header-box="electores">
+                  <input type="text" class="paper-inline-input electores-input-4b" data-header-field="electores" inputmode="numeric" maxlength="3" placeholder="300" autocomplete="off" aria-label="Total de electores hábiles" />
+                  <button type="button" class="verify-btn size-inline" data-verify-key="header.electores" data-required="true" data-label="Electores hábiles">○</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ubigeo 4b editable directamente -->
+            <div class="ubigeo-row">
+              <div class="ubigeo-field">
+                <label>DEPARTAMENTO</label>
+                <div class="ubigeo-value" data-header-box="departamento">
+                  <input type="text" class="paper-inline-input ubigeo-input" data-header-field="departamento" placeholder="DEPARTAMENTO" autocomplete="off" aria-label="Departamento" />
+                  <button type="button" class="verify-btn size-inline" data-verify-key="header.departamento" data-required="true" data-label="Departamento">○</button>
+                </div>
+              </div>
+              <div class="ubigeo-field">
+                <label>PROVINCIA</label>
+                <div class="ubigeo-value" data-header-box="provincia">
+                  <input type="text" class="paper-inline-input ubigeo-input" data-header-field="provincia" placeholder="PROVINCIA" autocomplete="off" aria-label="Provincia" />
+                  <button type="button" class="verify-btn size-inline" data-verify-key="header.provincia" data-required="true" data-label="Provincia">○</button>
+                </div>
+              </div>
+              <div class="ubigeo-field">
+                <label>DISTRITO</label>
+                <div class="ubigeo-value" data-header-box="distrito">
+                  <input type="text" class="paper-inline-input ubigeo-input" data-header-field="distrito" placeholder="DISTRITO" autocomplete="off" aria-label="Distrito" />
+                  <button type="button" class="verify-btn size-inline" data-verify-key="header.distrito" data-required="true" data-label="Distrito">○</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección C -->
+            <div class="section-c-header">
+              <div class="letter-c">C</div>
+              <div class="section-c-title">ACTA DE ESCRUTINIO</div>
+            </div>
+
+            <div class="intro-line">
+              Siendo las
+              <span class="time-inline-wrap" data-time-wrap="escrutinioStart">
+                <input type="text" class="dotted-input" data-time-display="escrutinioStart" placeholder="__:__" readonly aria-label="Hora de inicio del escrutinio" />
+                <span class="time-inline-icon" aria-hidden="true">🕒</span>
+                <input type="time" class="time-native-overlay" data-time-slot="escrutinioStart" aria-label="Seleccionar hora de inicio del escrutinio" />
+              </span>
+              del 6 de diciembre de 2026, se inició el ACTO DE ESCRUTINIO.
+            </div>
+
+            <div class="important-line">
+              <strong>MUY IMPORTANTE.</strong> <em>Escribe con números legibles como estos:</em>
+              <span class="sample-digits">0 1 2 3 4 5 6 7 8 9</span>
+            </div>
+
+            <!-- Tabla principal de votos -->
+            <div class="table-wrapper">
+              <table class="vote-table">
+                <colgroup>
+                  <col style="width: 18px;" />
+                  <col />
+                  <col style="width: 66px;" />
+                  <col style="width: 78px;" />
+                  <col style="width: 18px;" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th style="border:none; background:transparent;"></th>
+                    <th colspan="2">ORGANIZACIONES POLÍTICAS</th>
+                    <th class="votes-col-header">TOTAL DE VOTOS</th>
+                    <th style="border:none; background:transparent;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Fila 1: Organización Política 1 (Paraguas) -->
+                  <tr>
+                    <td class="row-num-cell">1</td>
+                    <td class="org-name">
+                      <input type="text" class="org-name-input" data-org-input="1" placeholder="ORGANIZACIÓN POLÍTICA 1" autocomplete="off" aria-label="Nombre de la Organización Política 1" />
+                    </td>
+                    <td class="org-symbol">
+                      <svg width="44" height="42" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-label="Paraguas">
+                        <path d="M32 6 C14 6, 6 20, 6 31 C11 27, 17 27, 21 31 C25 27, 30 27, 32 31 C34 27, 39 27, 43 31 C47 27, 53 27, 58 31 C58 20, 50 6, 32 6 Z" fill="#4f4d48"/>
+                        <path d="M32 4 V50 C32 55, 27 57, 23 55 C21 54, 20 52, 20 49" stroke="#333" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+                      </svg>
+                    </td>
+                    <td style="padding:0;">
+                      <div class="digit-grid digit-group" data-number-key="party1Votes">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos Organización Política 1 centenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos Organización Política 1 decenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos Organización Política 1 unidades" />
+                      </div>
+                    </td>
+                    <td class="row-num-cell">1</td>
+                  </tr>
+
+                  <!-- Fila 2 sombreada: Organización Política 2 (Dado 3D) -->
+                  <tr class="shaded-row">
+                    <td class="row-num-cell">2</td>
+                    <td class="org-name">
+                      <input type="text" class="org-name-input" data-org-input="2" placeholder="ORGANIZACIÓN POLÍTICA 2" autocomplete="off" aria-label="Nombre de la Organización Política 2" />
+                    </td>
+                    <td class="org-symbol">
+                      <svg width="44" height="42" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-label="Dado">
+                        <polygon points="32,8 54,19 32,30 10,19" fill="#b7b4ac" stroke="#555" stroke-width="1"/>
+                        <polygon points="10,19 32,30 32,56 10,45" fill="#77756f" stroke="#555" stroke-width="1"/>
+                        <polygon points="32,30 54,19 54,45 32,56" fill="#d5d2ca" stroke="#555" stroke-width="1"/>
+                        <ellipse cx="32" cy="19" rx="3.2" ry="2.2" fill="#222"/>
+                        <circle cx="17" cy="31" r="2.3" fill="#222"/>
+                        <circle cx="25" cy="44" r="2.3" fill="#222"/>
+                        <circle cx="38" cy="33" r="2.1" fill="#222"/>
+                        <circle cx="48" cy="28" r="2.1" fill="#222"/>
+                        <circle cx="43" cy="38" r="2.1" fill="#222"/>
+                        <circle cx="38" cy="48" r="2.1" fill="#222"/>
+                        <circle cx="48" cy="43" r="2.1" fill="#222"/>
+                      </svg>
+                    </td>
+                    <td style="padding:0;">
+                      <div class="digit-grid digit-group" data-number-key="party2Votes">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos Organización Política 2 centenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos Organización Política 2 decenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos Organización Política 2 unidades" />
+                      </div>
+                    </td>
+                    <td class="row-num-cell">2</td>
+                  </tr>
+
+                  <!-- Votos en Blanco -->
+                  <tr>
+                    <td class="row-num-cell"></td>
+                    <td colspan="2" class="special-row-label">VOTOS EN BLANCO</td>
+                    <td style="padding:0;">
+                      <div class="digit-grid digit-group" data-number-key="blankVotes">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos en blanco centenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos en blanco decenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos en blanco unidades" />
+                      </div>
+                    </td>
+                    <td class="row-num-cell"></td>
+                  </tr>
+
+                  <!-- Votos Nulos -->
+                  <tr>
+                    <td class="row-num-cell"></td>
+                    <td colspan="2" class="special-row-label">VOTOS NULOS</td>
+                    <td style="padding:0;">
+                      <div class="digit-grid digit-group" data-number-key="nullVotes">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos nulos centenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos nulos decenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos nulos unidades" />
+                      </div>
+                    </td>
+                    <td class="row-num-cell"></td>
+                  </tr>
+
+                  <!-- Votos Impugnados -->
+                  <tr>
+                    <td class="row-num-cell"></td>
+                    <td colspan="2" class="special-row-label">VOTOS IMPUGNADOS</td>
+                    <td style="padding:0;">
+                      <div class="digit-grid digit-group" data-number-key="challengedVotes">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos impugnados centenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos impugnados decenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Votos impugnados unidades" />
+                      </div>
+                    </td>
+                    <td class="row-num-cell"></td>
+                  </tr>
+
+                  <!-- Total de Votos Emitidos -->
+                  <tr>
+                    <td class="row-num-cell"></td>
+                    <td colspan="2" class="special-row-label">
+                      <div class="total-label-flex">
+                        <span>TOTAL DE VOTOS EMITIDOS</span>
+                        <span class="auto-sum-tag" title="Se suma automáticamente al ingresar votos">AUTO</span>
+                        <svg class="arrow-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M0 5 H11 V1 L20 7 L11 13 V9 H0 Z" fill="#1a1a1a"/>
+                        </svg>
+                      </div>
+                    </td>
+                    <td style="padding:0;">
+                      <div class="digit-grid digit-group" data-number-key="totalVotes">
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Total votos emitidos centenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Total votos emitidos decenas" />
+                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Total votos emitidos unidades" />
+                      </div>
+                    </td>
+                    <td class="row-num-cell"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Barra de referencia automática de suma y progreso en vivo -->
+            <div class="vote-reference" id="voteReference">
+              <div class="vote-ref-top">
+                <span class="vote-ref-text" id="voteRefText">Suma automática: ingresa los votos en cada fila y el total se irá calculando en tiempo real.</span>
+                <button type="button" class="vote-ref-action" id="voteRefAction" hidden></button>
+              </div>
+              <div class="vote-progress-track" id="voteProgressTrack" hidden>
+                <div class="vote-progress-fill" id="voteProgressFill"></div>
+              </div>
+            </div>
+
+            <!-- Observaciones 4b -->
+            <div class="observations-box" data-obs-section="C">
+              <div class="obs-header">
+                <span>OBSERVACIONES:</span>
+                <svg class="arrow-svg" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0 5 H11 V1 L20 7 L11 13 V9 H0 Z" fill="#1a1a1a"/>
+                </svg>
+              </div>
+              <textarea class="obs-textarea" rows="2" data-persist-key="obs-C" aria-label="Observaciones escrutinio"></textarea>
+              <div class="verify-row">
+                <span>Revisión visual de observaciones (C)</span>
+                <button type="button" class="verify-btn size-block" data-verify-key="C.observations" data-required="true" data-label="observaciones de la sección C">○</button>
+              </div>
+            </div>
+
+            <!-- Cierre y Total de ciudadanos que votaron -->
+            <div class="closing-block">
+              <div class="closing-time">
+                Siendo las
+                <span class="time-inline-wrap" data-time-wrap="escrutinioEnd">
+                  <input type="text" class="dotted-input" style="width:118px;" data-time-display="escrutinioEnd" placeholder="__:__" readonly aria-label="Hora de finalización del escrutinio" />
+                  <span class="time-inline-icon" aria-hidden="true">🕒</span>
+                  <input type="time" class="time-native-overlay" data-time-slot="escrutinioEnd" aria-label="Seleccionar hora de finalización del escrutinio" />
+                </span>
+                finalizó el ACTO DE ESCRUTINIO.
+              </div>
+
+              <div class="citizens-row">
+                <div class="citizens-label">TOTAL DE CIUDADANOS QUE VOTARON:</div>
+                <div class="citizens-digits digit-group" data-number-key="citizensC">
+                  <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Ciudadanos que votaron centenas 4b" />
+                  <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Ciudadanos que votaron decenas 4b" />
+                  <input type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Ciudadanos que votaron unidades 4b" />
+                </div>
+              </div>
+              <div class="inline-field-alert" id="citizensCCrossAlert" hidden></div>
+            </div>
+          </div>
+
+          <!-- Firmas de Miembros de Mesa y Personeros 4b -->
+          <div>
+            <div class="signatures-title">
+              FIRMA, NOMBRES, APELLIDOS Y DNI DE MIEMBROS DE MESA (OBLIGATORIO)
+            </div>
+            <div class="members-grid" data-members-host="C"></div>
+
+            <div class="personeros-title">FIRMA Y DATOS DE PERSONEROS</div>
+            <div class="personeros-grid" data-personeros-host="C"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      document.addEventListener("DOMContentLoaded", () => {
+        /* =====================================================================
+           1. REFERENCIAS Y CONSTANTES GLOBALES
+           ===================================================================== */
+        const $ = (sel, root = document) => root.querySelector(sel);
+        const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+        const STORAGE_KEY = "acta-electoral-regional-2026-v3";
+        const STORAGE_BACKUP_KEY = "acta-electoral-regional-2026-v3-backup";
+        const MIN_SCALE = 0.25;
+        const MAX_SCALE = 1.6;
+        const ZOOM_STEP = 0.1;
+        const MOBILE_BREAKPOINT = 760;
+
+        const page4a = $("#page4a");
+        const page4b = $("#page4b");
+        const pagesStack = $("#pagesStack");
+        const scaleWrapper = $("#scaleWrapper");
+        const viewerStage = $("#viewerStage");
+        const opsHeader = $("#opsHeader");
+        const issuesPopover = $("#issuesPopover");
+        const btnIssuesToggle = $("#btnIssuesToggle");
+        const autosaveBadge = $("#autosaveBadge");
+        const autosaveText = $("#autosaveText");
+        const toastEl = $("#toast");
+
+        const ROLES = [
+          { key: "member1", title: "PRESIDENTE", label: "Presidente" },
+          { key: "member2", title: "SECRETARIO", label: "Secretario" },
+          { key: "member3", title: "TERCER MIEMBRO", label: "Tercer Miembro" }
+        ];
+
+        const TIME_SLOTS = [
+          { slot: "install", label: "Hora de instalación (A)", tab: "a" },
+          { slot: "sufragioEnd", label: "Hora de fin del sufragio (B)", tab: "b" },
+          { slot: "escrutinioStart", label: "Hora de inicio del escrutinio (C)", tab: "c" },
+          { slot: "escrutinioEnd", label: "Hora de fin del escrutinio (C)", tab: "c" }
+        ];
+
+        const VOTE_COUNT_KEYS = [
+          "party1Votes",
+          "party2Votes",
+          "blankVotes",
+          "nullVotes",
+          "challengedVotes"
+        ];
+
+        let state = {
+          activeId: "mesa-1",
+          activeTab: "a",
+          lastSavedAt: null,
+          mesas: [{ id: "mesa-1", name: "Mesa 1", data: {} }],
+          party1: "",
+          party2: ""
+        };
+
+        let activeTab = "a";
+        let fitMode = "fit-width";
+        let currentScale = 1;
+        let toastTimer = null;
+        let saveTimer = null;
+        let hadSavedSession = false;
+
+        /* =====================================================================
+           2. UTILIDADES GENERALES
+           ===================================================================== */
+        function onlyDigits(val, maxLen = 12) {
+          return String(val ?? "").replace(/\D/g, "").slice(0, maxLen);
+        }
+
+        function safeUpper(val, fallback = "") {
+          const trimmed = String(val ?? "").trim();
+          return trimmed ? trimmed.toLocaleUpperCase("es-PE") : fallback;
+        }
+
+        function notify(message) {
+          if (!toastEl) return;
+          toastEl.textContent = message;
+          toastEl.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+        }
+
+        function format12Hour(hhmm) {
+          if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return "";
+          const [h, m] = hhmm.split(":").map(Number);
+          const period = h >= 12 ? "p. m." : "a. m.";
+          const h12 = h % 12 || 12;
+          return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${period}`;
+        }
+
+        function timeToMinutes(hhmm) {
+          if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return null;
+          const [h, m] = hhmm.split(":").map(Number);
+          if (h > 23 || m > 59) return null;
+          return h * 60 + m;
+        }
+
+        function numberToSpanish(n) {
+          const num = Number(n);
+          if (!Number.isInteger(num) || num < 0 || num > 999) return "";
+          const units = ["CERO", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
+          const teens = ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISÉIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"];
+          const twenties = ["VEINTE", "VEINTIUNO", "VEINTIDÓS", "VEINTITRÉS", "VEINTICUATRO", "VEINTICINCO", "VEINTISÉIS", "VEINTISIETE", "VEINTIOCHO", "VEINTINUEVE"];
+          const tens = ["", "", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+          const hundreds = ["", "CIENTO", "DOSCIENTOS", "TRESCIENTOS", "CUATROCIENTOS", "QUINIENTOS", "SEISCIENTOS", "SETECIENTOS", "OCHOCIENTOS", "NOVECIENTOS"];
+          if (num < 10) return units[num];
+          if (num < 20) return teens[num - 10];
+          if (num < 30) return twenties[num - 20];
+          if (num < 100) {
+            const rem = num % 10;
+            return rem ? `${tens[Math.floor(num / 10)]} Y ${units[rem]}` : tens[num / 10];
+          }
+          if (num === 100) return "CIEN";
+          const rem = num % 100;
+          return rem ? `${hundreds[Math.floor(num / 100)]} ${numberToSpanish(rem)}` : hundreds[num / 100];
+        }
+
+        function diffMessage(unit, expected, actual) {
+          const diff = Math.abs(expected - actual);
+          return actual < expected ? `Faltan ${diff} ${unit}.` : `Sobran ${diff} ${unit}.`;
+        }
+
+        function formatSavedClock(timestamp, includeSeconds = false) {
+          if (!timestamp) return "";
+          const d = new Date(timestamp);
+          if (Number.isNaN(d.getTime())) return "";
+          return d.toLocaleTimeString("es-PE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            ...(includeSeconds ? { second: "2-digit" } : {}),
+            hour12: false
+          });
+        }
+
+        /* =====================================================================
+           3. GENERACIÓN DE TARJETAS DE MIEMBROS / PERSONEROS Y GRUPOS NUMÉRICOS
+           ===================================================================== */
+        function createDniInputsMarkup(prefix, ariaOwner) {
+          let html = "";
+          for (let i = 0; i < 8; i++) {
+            html += `<input type="text" inputmode="numeric" maxlength="1" autocomplete="off" data-persist-key="${prefix}-dni-${i}" aria-label="DNI ${ariaOwner} dígito ${i + 1}" />`;
+          }
+          return html;
+        }
+
+        function renderMembersAndPersoneros() {
+          ["A", "B", "C"].forEach((sec) => {
+            const membersHost = $(`[data-members-host="${sec}"]`);
+            if (membersHost) {
+              membersHost.innerHTML = ROLES.map((role) => {
+                const prefix = `${sec}.${role.key}`;
+                const dniBadge = sec === "C" ? "<span>DNI</span>" : '<span class="dni-tag">DNI</span>';
+                return `
+                  <div class="member-card" data-member-card="${prefix}">
+                    <div class="sig-box verify-container">
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.firma" data-required="true" data-label="Sección ${sec} · ${role.label}: firma">○</button>
+                    </div>
+                    <div class="role-bar">${role.title}</div>
+                    <div class="field-line">
+                      <span>NOMBRES</span>
+                      <input type="text" data-persist-key="${prefix}-nombres" autocomplete="off" aria-label="Nombres ${role.label} ${sec}" />
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.nombres" data-required="true" data-label="Sección ${sec} · ${role.label}: nombres">○</button>
+                    </div>
+                    <div class="field-line">
+                      <span>APELLIDOS</span>
+                      <input type="text" data-persist-key="${prefix}-apellidos" autocomplete="off" aria-label="Apellidos ${role.label} ${sec}" />
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.apellidos" data-required="true" data-label="Sección ${sec} · ${role.label}: apellidos">○</button>
+                    </div>
+                    <div class="dni-row">
+                      ${dniBadge}
+                      <div class="dni-cells digit-group" data-dni-group="${prefix}">
+                        ${createDniInputsMarkup(prefix, `${role.label} ${sec}`)}
+                      </div>
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.dni" data-required="true" data-label="Sección ${sec} · ${role.label}: DNI">○</button>
+                    </div>
+                  </div>
+                `;
+              }).join("");
+            }
+
+            const personerosHost = $(`[data-personeros-host="${sec}"]`);
+            if (personerosHost) {
+              const cardsHtml = [1, 2].map((num) => {
+                const prefix = `${sec}.personero${num}`;
+                const dniBadge = sec === "C" ? "<span>DNI</span>" : '<span class="dni-tag">DNI</span>';
+                return `
+                  <div class="personero-card" data-personero-card="${prefix}">
+                    <div class="personero-sig-line verify-container">
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.firma" data-required="false" data-label="Sección ${sec} · Personero ${num}: firma">○</button>
+                    </div>
+                    <div class="personero-label">PERSONERO</div>
+                    <div class="field-line">
+                      <span>ORG. POLÍT.</span>
+                      <input type="text" data-persist-key="${prefix}-org" autocomplete="off" aria-label="Organización Política Personero ${num} ${sec}" />
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.organizacion" data-required="false" data-label="Sección ${sec} · Personero ${num}: organización política">○</button>
+                    </div>
+                    <div class="field-line">
+                      <span>NOMBRES</span>
+                      <input type="text" data-persist-key="${prefix}-nombres" autocomplete="off" aria-label="Nombres Personero ${num} ${sec}" />
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.nombres" data-required="false" data-label="Sección ${sec} · Personero ${num}: nombres">○</button>
+                    </div>
+                    <div class="field-line">
+                      <span>APELLIDOS</span>
+                      <input type="text" data-persist-key="${prefix}-apellidos" autocomplete="off" aria-label="Apellidos Personero ${num} ${sec}" />
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.apellidos" data-required="false" data-label="Sección ${sec} · Personero ${num}: apellidos">○</button>
+                    </div>
+                    <div class="dni-row">
+                      ${dniBadge}
+                      <div class="dni-cells digit-group" data-dni-group="${prefix}">
+                        ${createDniInputsMarkup(prefix, `Personero ${num} ${sec}`)}
+                      </div>
+                      <button type="button" class="verify-btn size-inline" data-verify-key="${prefix}.dni" data-required="false" data-label="Sección ${sec} · Personero ${num}: DNI">○</button>
+                    </div>
+                  </div>
+                `;
+              }).join("");
+              personerosHost.innerHTML = `${cardsHtml}<div></div>`;
+            }
+          });
+        }
+
+        renderMembersAndPersoneros();
+
+        const numberGroups = {};
+        $$("[data-number-key]", pagesStack).forEach((group) => {
+          const key = group.dataset.numberKey;
+          numberGroups[key] = group;
+          $$("input", group).forEach((inp, idx) => {
+            inp.dataset.persistKey = `${key}-d${idx}`;
+          });
+        });
+
+        /* =====================================================================
+           4. LECTURA / ESCRITURA DE CASILLAS NUMÉRICAS, DNI, LETRAS Y SUMA EN VIVO
+           ===================================================================== */
+        function readDigitGroup(group) {
+          if (!group) return null;
+          const inputs = $$("input", group);
+          if (!inputs.length) return null;
+          const digits = inputs.map((i) => onlyDigits(i.value, 1));
+          const firstIdx = digits.findIndex((d) => d !== "");
+          if (firstIdx === -1) return null;
+          let lastIdx = digits.length - 1;
+          while (lastIdx >= 0 && digits[lastIdx] === "") lastIdx--;
+          for (let i = firstIdx; i <= lastIdx; i++) {
+            if (digits[i] === "") return null;
+          }
+          return Number(digits.slice(firstIdx, lastIdx + 1).join(""));
+        }
+
+        function writeDigitGroup(group, value) {
+          if (!group) return;
+          const inputs = $$("input", group);
+          if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+            inputs.forEach((inp) => { inp.value = ""; });
+            return;
+          }
+          const clamped = Math.max(0, Math.min(999, Math.round(Number(value))));
+          const chars = String(clamped).padStart(inputs.length, " ").slice(-inputs.length);
+          inputs.forEach((inp, idx) => {
+            inp.value = chars[idx] === " " ? "" : chars[idx];
+          });
+        }
+
+        function alignDigitGroup(group) {
+          if (!group) return;
+          const val = readDigitGroup(group);
+          if (val !== null) writeDigitGroup(group, val);
+        }
+
+        function readDniString(group) {
+          if (!group) return "";
+          const inputs = $$("input", group);
+          if (inputs.some((i) => onlyDigits(i.value, 1) === "")) return "";
+          return inputs.map((i) => onlyDigits(i.value, 1)).join("");
+        }
+
+        function updateWordsFields() {
+          ["received", "voters", "unused"].forEach((key) => {
+            const wordsInput = $(`[data-words-key="${key}"]`);
+            if (!wordsInput) return;
+            const val = readDigitGroup(numberGroups[key]);
+            wordsInput.value = val === null ? "" : numberToSpanish(val);
+          });
+        }
+
+        function computeVoteRowsState() {
+          const vals = VOTE_COUNT_KEYS.map((key) => readDigitGroup(numberGroups[key]));
+          const filledCount = vals.filter((v) => v !== null).length;
+          const runningSum = filledCount > 0
+            ? vals.reduce((acc, v) => acc + (v ?? 0), 0)
+            : null;
+          return {
+            vals,
+            filledCount,
+            missingCount: VOTE_COUNT_KEYS.length - filledCount,
+            allReady: filledCount === VOTE_COUNT_KEYS.length,
+            runningSum
+          };
+        }
+
+        function syncRunningTotalVotes() {
+          const { runningSum } = computeVoteRowsState();
+          writeDigitGroup(numberGroups.totalVotes, runningSum);
+        }
+
+        /* =====================================================================
+           5. SINCRONIZACIÓN DIRECTA DE CABECERA (4a <-> 4b) Y ENTRADAS EN PAPEL
+           ===================================================================== */
+        function getHeaderValue(field) {
+          const input = $(`[data-header-field="${field}"]`, pagesStack);
+          return input ? input.value : "";
+        }
+
+        function setHeaderValue(field, rawValue) {
+          let val = String(rawValue ?? "");
+          if (field === "mesa") val = onlyDigits(val, 6);
+          else if (field === "electores") val = onlyDigits(val, 3);
+          $$(`[data-header-field="${field}"]`, pagesStack).forEach((inp) => {
+            if (inp.value !== val) inp.value = val;
+          });
+        }
+
+        function getActiveHeaderInput(field) {
+          const activePage = activeTab === "c" ? page4b : page4a;
+          return $(`[data-header-field="${field}"]`, activePage) || $(`[data-header-field="${field}"]`, pagesStack);
+        }
+
+        pagesStack.addEventListener("input", (e) => {
+          const target = e.target;
+          if (target.matches("[data-header-field]")) {
+            setHeaderValue(target.dataset.headerField, target.value);
+            scheduleSaveAndValidate();
+            return;
+          }
+          if (target.matches("[data-org-input]")) {
+            scheduleSaveAndValidate();
+            return;
+          }
+          if (target.matches(".digit-group input")) {
+            const cleaned = onlyDigits(target.value, 1);
+            target.value = cleaned;
+            const group = target.closest(".digit-group");
+            const inputs = $$("input", group);
+            const idx = inputs.indexOf(target);
+            if (cleaned && idx >= 0 && idx < inputs.length - 1) {
+              inputs[idx + 1].focus();
+            }
+            if (VOTE_COUNT_KEYS.includes(group?.dataset?.numberKey)) {
+              syncRunningTotalVotes();
+            }
+            scheduleSaveAndValidate();
+            return;
+          }
+          if (target.matches("[data-persist-key]")) {
+            scheduleSaveAndValidate();
+          }
+        });
+
+        pagesStack.addEventListener("keydown", (e) => {
+          const target = e.target;
+          if (!target.matches(".digit-group input")) return;
+          const inputs = $$("input", target.closest(".digit-group"));
+          const idx = inputs.indexOf(target);
+          if (e.key === "Backspace" && !target.value && idx > 0) {
+            inputs[idx - 1].focus();
+          } else if (e.key === "ArrowLeft" && idx > 0) {
+            e.preventDefault();
+            inputs[idx - 1].focus();
+          } else if (e.key === "ArrowRight" && idx < inputs.length - 1) {
+            e.preventDefault();
+            inputs[idx + 1].focus();
+          }
+        });
+
+        pagesStack.addEventListener("paste", (e) => {
+          const target = e.target;
+          if (!target.matches(".digit-group input")) return;
+          const pasted = (e.clipboardData || window.clipboardData)?.getData("text") || "";
+          const digits = onlyDigits(pasted, 12);
+          if (!digits) return;
+          e.preventDefault();
+          const group = target.closest(".digit-group");
+          const inputs = $$("input", group);
+          let startIdx = inputs.indexOf(target);
+          if (digits.length >= inputs.length) startIdx = 0;
+          for (let i = 0; i < digits.length && startIdx + i < inputs.length; i++) {
+            inputs[startIdx + i].value = digits[i];
+          }
+          const focusIdx = Math.min(startIdx + digits.length, inputs.length - 1);
+          inputs[focusIdx].focus();
+          if (VOTE_COUNT_KEYS.includes(group?.dataset?.numberKey)) {
+            syncRunningTotalVotes();
+          }
+          scheduleSaveAndValidate();
+        });
+
+        pagesStack.addEventListener("focusout", (e) => {
+          const target = e.target;
+          if (!target.matches("[data-number-key] input")) return;
+          const group = target.closest("[data-number-key]");
+          if (!group || group.contains(e.relatedTarget)) return;
+          alignDigitGroup(group);
+          if (VOTE_COUNT_KEYS.includes(group.dataset.numberKey)) {
+            syncRunningTotalVotes();
+          }
+          scheduleSaveAndValidate();
+        });
+
+        pagesStack.addEventListener("change", (e) => {
+          if (e.target.matches("[data-header-field], [data-org-input], [data-persist-key], .digit-group input")) {
+            scheduleSaveAndValidate();
+          }
+        });
+
+        /* =====================================================================
+           6. HORARIOS DIRECTOS, SÍ/NO Y VERIFICACIÓN DE 3 ESTADOS
+           ===================================================================== */
+        function getTimeSlotValue(slot) {
+          const nativeInput = $(`[data-time-slot="${slot}"]`, pagesStack);
+          return nativeInput ? nativeInput.value : "";
+        }
+
+        function setTimeSlotValue(slot, hhmm) {
+          const clean = /^\d{2}:\d{2}$/.test(String(hhmm || "")) ? hhmm : "";
+          const nativeInput = $(`[data-time-slot="${slot}"]`, pagesStack);
+          const displayInput = $(`[data-time-display="${slot}"]`, pagesStack);
+          if (nativeInput) nativeInput.value = clean;
+          if (displayInput) displayInput.value = clean ? format12Hour(clean) : "";
+        }
+
+        $$("[data-time-slot]", pagesStack).forEach((picker) => {
+          const handler = () => {
+            setTimeSlotValue(picker.dataset.timeSlot, picker.value);
+            scheduleSaveAndValidate();
+          };
+          picker.addEventListener("input", handler);
+          picker.addEventListener("change", handler);
+        });
+
+        const ynButtons = $$(".yn-btn", page4a);
+        ynButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const wasChecked = btn.classList.contains("checked");
+            ynButtons.forEach((other) => {
+              other.classList.remove("checked");
+              other.setAttribute("aria-pressed", "false");
+            });
+            if (!wasChecked) {
+              btn.classList.add("checked");
+              btn.setAttribute("aria-pressed", "true");
+            }
+            scheduleSaveAndValidate();
+          });
+        });
+
+        function applyVerifyVisual(btn, stateCode) {
+          const code = Number(stateCode) || 0;
+          btn.dataset.state = String(code);
+          btn.classList.toggle("is-verified", code === 1);
+          btn.classList.toggle("is-error", code === 2);
+          btn.textContent = code === 1 ? "✓" : code === 2 ? "✕" : "○";
+          const label = btn.dataset.label || "campo";
+          const statusDesc = code === 1 ? "verificado" : code === 2 ? "con error" : "pendiente";
+          btn.setAttribute("aria-label", `Verificar ${label}: ${statusDesc}`);
+          btn.title = `${label}: ${statusDesc}. Toca para cambiar estado.`;
+        }
+
+        function setVerifyStateByKey(key, stateCode) {
+          $$(`.verify-btn[data-verify-key="${key}"]`).forEach((btn) => applyVerifyVisual(btn, stateCode));
+        }
+
+        function getVerifyState(key) {
+          const btn = $(`.verify-btn[data-verify-key="${key}"]`);
+          return btn ? Number(btn.dataset.state || 0) : 0;
+        }
+
+        pagesStack.addEventListener("click", (e) => {
+          const btn = e.target.closest(".verify-btn[data-verify-key]");
+          if (!btn) return;
+          const key = btn.dataset.verifyKey;
+          const nextState = (Number(btn.dataset.state || 0) + 1) % 3;
+          setVerifyStateByKey(key, nextState);
+          scheduleSaveAndValidate();
+        });
+
+        /* =====================================================================
+           7. PESTAÑAS A / B / C, ZOOM, AJUSTE RESPONSIVO E IMPRESIÓN
+           ===================================================================== */
+        function updateZoomButtons() {
+          $("#btnFitPage").classList.toggle("active", fitMode === "fit-page");
+          $("#btnFitWidth").classList.toggle("active", fitMode === "fit-width");
+        }
+
+        function applyScale(scale) {
+          const clamped = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+          currentScale = clamped;
+          const isC = activeTab === "c";
+          const activePage = isC ? page4b : page4a;
+          const w = isC ? 794 : 1123;
+          const h = Math.max(isC ? 1123 : 794, activePage.scrollHeight);
+
+          pagesStack.style.width = `${w}px`;
+          pagesStack.style.marginLeft = `${-w / 2}px`;
+          pagesStack.style.transform = `scale(${clamped})`;
+          scaleWrapper.style.width = `${Math.round(w * clamped)}px`;
+          scaleWrapper.style.height = `${Math.round(h * clamped)}px`;
+          $("#zoomReadout").textContent = `${Math.round(clamped * 100)}%`;
+        }
+
+        function recalcScale() {
+          if (window.innerWidth <= MOBILE_BREAKPOINT) {
+            pagesStack.style.width = "";
+            pagesStack.style.marginLeft = "";
+            pagesStack.style.transform = "";
+            scaleWrapper.style.width = "";
+            scaleWrapper.style.height = "";
+            return;
+          }
+
+          if (fitMode === "manual") {
+            applyScale(currentScale);
+            return;
+          }
+
+          const isC = activeTab === "c";
+          const activePage = isC ? page4b : page4a;
+          const w = isC ? 794 : 1123;
+          const h = Math.max(isC ? 1123 : 794, activePage.scrollHeight);
+          const headerH = opsHeader ? opsHeader.offsetHeight : 140;
+          const availW = Math.max(320, window.innerWidth - 32);
+          const availH = Math.max(300, window.innerHeight - headerH - 36);
+
+          if (fitMode === "fit-page") {
+            applyScale(Math.min(availW / w, availH / h, 1.15));
+          } else {
+            applyScale(Math.min(availW / w, 1.25));
+          }
+        }
+
+        function setTab(tab, persist = true) {
+          activeTab = tab;
+          state.activeTab = tab;
+          document.body.dataset.tab = tab;
+          $$(".tab-btn", opsHeader).forEach((btn) => {
+            const isActive = btn.dataset.tab === tab;
+            btn.classList.toggle("active", isActive);
+            btn.setAttribute("aria-selected", isActive ? "true" : "false");
+          });
+          if (persist) {
+            saveState({ skipStrip: true });
+          }
+          requestAnimationFrame(recalcScale);
+        }
+
+        $$(".tab-btn", opsHeader).forEach((btn) => {
+          btn.addEventListener("click", () => setTab(btn.dataset.tab, true));
+        });
+
+        $("#btnFitPage").addEventListener("click", () => {
+          fitMode = "fit-page";
+          updateZoomButtons();
+          recalcScale();
+        });
+
+        $("#btnFitWidth").addEventListener("click", () => {
+          fitMode = "fit-width";
+          updateZoomButtons();
+          recalcScale();
+        });
+
+        $("#btnZoomIn").addEventListener("click", () => {
+          fitMode = "manual";
+          updateZoomButtons();
+          applyScale(currentScale + ZOOM_STEP);
+        });
+
+        $("#btnZoomOut").addEventListener("click", () => {
+          fitMode = "manual";
+          updateZoomButtons();
+          applyScale(currentScale - ZOOM_STEP);
+        });
+
+        $("#btnPrint").addEventListener("click", () => window.print());
+
+        btnIssuesToggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const willOpen = !issuesPopover.classList.contains("open");
+          issuesPopover.classList.toggle("open", willOpen);
+          btnIssuesToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!issuesPopover.contains(e.target) && !btnIssuesToggle.contains(e.target)) {
+            issuesPopover.classList.remove("open");
+            btnIssuesToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        function jumpToSectionField(section, focusEl) {
+          issuesPopover.classList.remove("open");
+          btnIssuesToggle.setAttribute("aria-expanded", "false");
+          if (section === "a" || section === "b" || section === "c") {
+            setTab(section);
+          }
+          setTimeout(() => {
+            const target = focusEl && document.contains(focusEl) ? focusEl : null;
+            if (!target) return;
+            target.scrollIntoView({ behavior: "smooth", block: "center" });
+            if (typeof target.focus === "function" && target.matches("input, textarea, button")) {
+              target.focus({ preventScroll: true });
+            } else {
+              const inner = $("input, textarea, button", target);
+              if (inner) inner.focus({ preventScroll: true });
+            }
+          }, 50);
+        }
+
+        /* =====================================================================
+           8. MOTOR DE VALIDACIÓN EN TIEMPO REAL ("CONTROL DE ERRORES")
+           ===================================================================== */
+        function clearFieldErrors() {
+          $$(".field-error", pagesStack).forEach((el) => el.classList.remove("field-error"));
+          $$(".is-match-cell", pagesStack).forEach((el) => el.classList.remove("is-match-cell"));
+        }
+
+        function setRulePill(id, ruleState, detailText, onClick) {
+          const pill = $(`#${id}`);
+          if (!pill) return;
+          pill.dataset.ruleState = ruleState;
+          const icon = $(".rule-pill-icon", pill);
+          const detail = $(".rule-pill-detail", pill);
+          if (icon) icon.textContent = ruleState === "ok" ? "✓" : ruleState === "error" ? "✕" : "○";
+          if (detail) detail.textContent = detailText;
+          pill.onclick = onClick || null;
+        }
+
+        function validateAll() {
+          clearFieldErrors();
+
+          const errors = [];
+          const pending = [];
+          const warnings = [];
+          const criticalAlerts = [];
+          const sufragioMessages = [];
+          const citizensCMessages = [];
+
+          function pushIssue(level, section, message, errorEls = null, focusEl = null) {
+            const item = { level, section, message, focusEl };
+            if (level === "error") errors.push(item);
+            else if (level === "warning") warnings.push(item);
+            else pending.push(item);
+
+            if (errorEls) {
+              const list = Array.isArray(errorEls) ? errorEls : [errorEls];
+              list.forEach((el) => {
+                if (el) el.classList.add("field-error");
+              });
+            }
+            return item;
+          }
+
+          // --- 1. Cabecera común (4a y 4b sincronizadas) ---
+          const mesaRaw = onlyDigits(getHeaderValue("mesa"), 6);
+          const electoresRaw = onlyDigits(getHeaderValue("electores"), 3);
+          const electores = electoresRaw ? Number(electoresRaw) : null;
+
+          const headerChecks = [
+            { field: "mesa", label: "Número de mesa", ok: mesaRaw.length === 6 },
+            { field: "electores", label: "Total de electores hábiles", ok: Boolean(electoresRaw) && electores >= 1 && electores <= 999 },
+            { field: "departamento", label: "Departamento", ok: Boolean(getHeaderValue("departamento").trim()) },
+            { field: "provincia", label: "Provincia", ok: Boolean(getHeaderValue("provincia").trim()) },
+            { field: "distrito", label: "Distrito", ok: Boolean(getHeaderValue("distrito").trim()) }
+          ];
+
+          headerChecks.forEach(({ field, label, ok }) => {
+            const boxes = $$(`[data-header-box="${field}"]`);
+            const focusEl = getActiveHeaderInput(field);
+            const vState = getVerifyState(`header.${field}`);
+            if (!ok) {
+              pushIssue("pending", "header", `Cabecera · ${label}: falta completar el dato.`, null, focusEl);
+            } else if (vState === 2) {
+              pushIssue("error", "header", `Cabecera · ${label} marcado con ✕.`, boxes, focusEl);
+            } else if (vState !== 1) {
+              pushIssue("pending", "header", `Cabecera · Falta confirmar con ✓ el campo ${label}.`, null, focusEl);
+            }
+          });
+
+          if (mesaRaw.length > 0 && mesaRaw.length !== 6) {
+            pushIssue("error", "header", "Cabecera · El número de mesa debe tener exactamente 6 dígitos.", $$('[data-header-box="mesa"]'), getActiveHeaderInput("mesa"));
+          }
+          if (electoresRaw && (!electores || electores < 1 || electores > 999)) {
+            pushIssue("error", "header", "Cabecera · Electores hábiles debe estar entre 001 y 999.", $$('[data-header-box="electores"]'), getActiveHeaderInput("electores"));
+          }
+
+          // --- 2. Material electoral (Sección A) ---
+          const selectedMaterial = $(".yn-btn.checked", page4a);
+          const matState = getVerifyState("A.material");
+          if (!selectedMaterial) {
+            pushIssue("pending", "a", "Sección A · Selecciona SÍ o NO para el estado del material electoral.", null, ynButtons[0]);
+          } else if (matState === 2) {
+            pushIssue("error", "a", "Sección A · Estado del material electoral marcado con ✕.", selectedMaterial);
+          } else if (matState !== 1) {
+            pushIssue("pending", "a", "Sección A · Confirma con ✓ el estado del material electoral.", null, selectedMaterial);
+          }
+          if (selectedMaterial?.dataset.yn === "no") {
+            const obsA = $('[data-persist-key="obs-A"]').value.trim();
+            if (!obsA) {
+              pushIssue("warning", "a", "Sección A · El material se marcó NO: registra o verifica el detalle en Observaciones de A.", null, $('[data-persist-key="obs-A"]'));
+            }
+          }
+
+          // --- 3. Cantidades numéricas y letras (A y B) ---
+          const qtyMeta = [
+            { key: "received", section: "a", label: "cédulas recibidas (A)" },
+            { key: "voters", section: "b", label: "ciudadanos que votaron (B)" },
+            { key: "unused", section: "b", label: "cédulas no utilizadas (B)" }
+          ];
+
+          qtyMeta.forEach(({ key, section, label }) => {
+            const group = numberGroups[key];
+            const inputs = $$("input", group);
+            const wordsInput = $(`[data-words-key="${key}"]`);
+            const val = readDigitGroup(group);
+
+            if (val === null) {
+              pushIssue("pending", section, `Sección ${section.toUpperCase()} · Completa las casillas de ${label} (ej. 085).`, inputs, inputs[0]);
+            } else {
+              const expected = numberToSpanish(val);
+              if (wordsInput.value.trim().toLocaleUpperCase("es-PE") !== expected) {
+                pushIssue("error", section, `Sección ${section.toUpperCase()} · El texto en letras de ${label} no coincide con ${String(val).padStart(3, "0")}.`, wordsInput);
+              }
+              const st = getVerifyState(`words.${key}`);
+              if (st === 2) {
+                pushIssue("error", section, `Sección ${section.toUpperCase()} · La verificación en letras de ${label} está marcada con ✕.`, wordsInput);
+              } else if (st !== 1) {
+                pushIssue("pending", section, `Sección ${section.toUpperCase()} · Confirma con ✓ el texto en letras de ${label}.`, null, wordsInput);
+              }
+            }
+          });
+
+          const received = readDigitGroup(numberGroups.received);
+          const voters = readDigitGroup(numberGroups.voters);
+          const unused = readDigitGroup(numberGroups.unused);
+
+          // REGLA 1: Cuadre de cédulas
+          if (received !== null && voters !== null && unused !== null) {
+            const sumAB = voters + unused;
+            if (sumAB !== received) {
+              const diff = received - sumAB;
+              const diffDesc = diff > 0 ? `faltan ${diff} cédulas` : `sobran ${Math.abs(diff)} cédulas`;
+              const msg = `Cuadre de cédulas: Ciudadanos que votaron (${voters}) + Cédulas no utilizadas (${unused}) = ${sumAB}, pero se recibieron ${received} (${diffDesc}).`;
+              const item = pushIssue("error", "b", msg, [
+                ...$$("input", numberGroups.voters),
+                ...$$("input", numberGroups.unused),
+                ...$$("input", numberGroups.received)
+              ], $$("input", numberGroups.voters)[0]);
+              criticalAlerts.push(item);
+              sufragioMessages.push(`✕ ${msg}`);
+              setRulePill("ruleCedulas", "error", diff > 0 ? `Faltan ${diff}` : `Sobran ${Math.abs(diff)}`, () => jumpToSectionField("b", $$("input", numberGroups.voters)[0]));
+            } else {
+              setRulePill("ruleCedulas", "ok", `${voters}+${unused} = ${received}`, () => jumpToSectionField("b", $$("input", numberGroups.voters)[0]));
+            }
+          } else {
+            setRulePill("ruleCedulas", "pending", "Faltan datos A/B", () => jumpToSectionField(received === null ? "a" : "b", $$("input", received === null ? numberGroups.received : numberGroups.voters)[0]));
+          }
+
+          // REGLA 2: Tope de electores
+          if (voters !== null && electores !== null) {
+            if (voters > electores) {
+              const excess = voters - electores;
+              const msg = `Tope de electores: Ciudadanos que votaron (${voters}) supera en ${excess} al Total de electores hábiles (${electores}).`;
+              const item = pushIssue("error", "b", msg, [
+                ...$$("input", numberGroups.voters),
+                ...$$('[data-header-box="electores"]')
+              ], $$("input", numberGroups.voters)[0]);
+              criticalAlerts.push(item);
+              sufragioMessages.push(`✕ ${msg}`);
+              setRulePill("ruleTope", "error", `Excede +${excess}`, () => jumpToSectionField("b", $$("input", numberGroups.voters)[0]));
+            } else {
+              setRulePill("ruleTope", "ok", `${voters} ≤ ${electores}`, () => jumpToSectionField("b", $$("input", numberGroups.voters)[0]));
+            }
+          } else {
+            setRulePill("ruleTope", "pending", "Falta B / hábiles", () => jumpToSectionField(electores === null ? "header" : "b", electores === null ? getActiveHeaderInput("electores") : $$("input", numberGroups.voters)[0]));
+          }
+
+          if (received !== null && electores !== null && received !== electores) {
+            pushIssue(
+              "warning",
+              "a",
+              `Aviso preventivo · Cédulas recibidas (${received}) difiere de electores hábiles (${electores}). Comprueba el acta física.`,
+              null,
+              $$("input", numberGroups.received)[0]
+            );
+          }
+
+          // --- 4. Observaciones en A, B y C ---
+          ["A", "B", "C"].forEach((sec) => {
+            const lower = sec.toLowerCase();
+            const st = getVerifyState(`${sec}.observations`);
+            const textarea = $(`[data-persist-key="obs-${sec}"]`);
+            if (st === 2) {
+              pushIssue("error", lower, `Sección ${sec} · Observaciones marcadas con ✕.`, textarea);
+            } else if (st !== 1) {
+              pushIssue("pending", lower, `Sección ${sec} · Revisa Observaciones y marca ✓ cuando estén comprobadas.`, null, textarea);
+            }
+          });
+
+          // --- 5. Miembros obligatorios y Personeros opcionales ---
+          ["A", "B", "C"].forEach((sec) => {
+            const lower = sec.toLowerCase();
+
+            ROLES.forEach((role) => {
+              const prefix = `${sec}.${role.key}`;
+              const card = $(`[data-member-card="${prefix}"]`);
+              if (!card) return;
+              const nomInput = $(`[data-persist-key="${prefix}-nombres"]`, card);
+              const apeInput = $(`[data-persist-key="${prefix}-apellidos"]`, card);
+              const dniGroup = $(`[data-dni-group="${prefix}"]`, card);
+              const dniInputs = $$("input", dniGroup);
+              const dniStr = readDniString(dniGroup);
+
+              const labelPrefix = `Sección ${sec} · ${role.label}`;
+              if (!nomInput.value.trim()) {
+                pushIssue("pending", lower, `${labelPrefix}: faltan los nombres.`, null, nomInput);
+              }
+              if (!apeInput.value.trim()) {
+                pushIssue("pending", lower, `${labelPrefix}: faltan los apellidos.`, null, apeInput);
+              }
+              if (dniStr.length !== 8) {
+                pushIssue("pending", lower, `${labelPrefix}: el DNI debe tener 8 dígitos completos.`, null, dniInputs[0]);
+              }
+
+              [
+                { k: "firma", name: "firma", el: $(".sig-box", card) },
+                { k: "nombres", name: "nombres", el: nomInput },
+                { k: "apellidos", name: "apellidos", el: apeInput },
+                { k: "dni", name: "DNI", el: dniInputs }
+              ].forEach((chk) => {
+                const st = getVerifyState(`${prefix}.${chk.k}`);
+                if (st === 2) {
+                  pushIssue("error", lower, `${labelPrefix}: ${chk.name} marcado con ✕.`, chk.el);
+                } else if (st !== 1) {
+                  pushIssue("pending", lower, `${labelPrefix}: falta verificar ${chk.name} con ✓.`, null, Array.isArray(chk.el) ? chk.el[0] : chk.el);
+                }
+              });
+            });
+
+            [1, 2].forEach((num) => {
+              const prefix = `${sec}.personero${num}`;
+              const card = $(`[data-personero-card="${prefix}"]`);
+              if (!card) return;
+              const anyFilled = $$("input", card).some((inp) => inp.value.trim() !== "");
+              const checkKeys = ["firma", "organizacion", "nombres", "apellidos", "dni"];
+              const states = checkKeys.map((k) => getVerifyState(`${prefix}.${k}`));
+              if (states.some((v) => v === 2)) {
+                pushIssue("error", lower, `Sección ${sec} · Personero ${num}: hay un campo marcado con ✕.`, card);
+              } else if (anyFilled && states.some((v) => v === 0)) {
+                pushIssue("warning", lower, `Sección ${sec} · Personero ${num}: tiene datos registrados sin completar sus verificaciones.`, null, card);
+              }
+            });
+          });
+
+          // --- 6. Escrutinio (C) y REGLA 3: Cuadre Sufragio vs. Escrutinio ---
+          const org1Name = safeUpper($('[data-org-input="1"]')?.value, "Organización Política 1");
+          const org2Name = safeUpper($('[data-org-input="2"]')?.value, "Organización Política 2");
+          const voteRowKeys = [
+            { key: "party1Votes", label: org1Name },
+            { key: "party2Votes", label: org2Name },
+            { key: "blankVotes", label: "Votos en blanco" },
+            { key: "nullVotes", label: "Votos nulos" },
+            { key: "challengedVotes", label: "Votos impugnados" }
+          ];
+
+          const allVoteRowInputs = voteRowKeys.flatMap(({ key }) => $$("input", numberGroups[key]));
+          const totalVotesInputs = $$("input", numberGroups.totalVotes);
+          const votersInputs = $$("input", numberGroups.voters);
+          const citizensCInputs = $$("input", numberGroups.citizensC);
+
+          const voteState = computeVoteRowsState();
+          voteRowKeys.forEach(({ key, label }, idx) => {
+            if (voteState.vals[idx] === null) {
+              pushIssue("pending", "c", `Sección C · Completa las casillas de ${label}.`, null, $$("input", numberGroups[key])[0]);
+            }
+          });
+
+          const { allReady: allRowsReady, runningSum, missingCount } = voteState;
+          const sumVotes = allRowsReady ? runningSum : null;
+          const totalVotes = readDigitGroup(numberGroups.totalVotes);
+          const citizensC = readDigitGroup(numberGroups.citizensC);
+          const refVoters = voters !== null ? voters : citizensC;
+
+          let hasSufragioEscrutinioError = false;
+          let sufragioEscrutinioShort = "";
+
+          if (runningSum !== null && runningSum > 999) {
+            hasSufragioEscrutinioError = true;
+            sufragioEscrutinioShort = `>999 (${runningSum})`;
+            const msg = `Cuadre tabla de escrutinio (C): La suma acumulada de votos (${runningSum}) supera el máximo de 999 permitido en las casillas.`;
+            const item = pushIssue("error", "c", msg, [...allVoteRowInputs, ...totalVotesInputs], totalVotesInputs[0]);
+            criticalAlerts.push(item);
+          }
+
+          if (!allRowsReady && runningSum !== null && refVoters !== null && runningSum > refVoters) {
+            hasSufragioEscrutinioError = true;
+            const excess = runningSum - refVoters;
+            sufragioEscrutinioShort = `Sobran ${excess}`;
+            const sourceLabel = voters !== null ? "Total de ciudadanos que votaron en B" : "Total de ciudadanos que votaron en C";
+            const msg = `Cuadre Sufragio vs. Escrutinio: La suma acumulada (${runningSum}) ya supera al ${sourceLabel} (${refVoters}) — sobran ${excess} votos.`;
+            const item = pushIssue(
+              "error",
+              "c",
+              msg,
+              [...allVoteRowInputs, ...totalVotesInputs, ...(voters !== null ? votersInputs : citizensCInputs)],
+              totalVotesInputs[0]
+            );
+            criticalAlerts.push(item);
+            if (voters !== null) sufragioMessages.push(`✕ ${msg}`);
+            else citizensCMessages.push(`✕ ${msg}`);
+          }
+
+          if (sumVotes !== null && voters !== null && sumVotes !== voters) {
+            hasSufragioEscrutinioError = true;
+            const diff = voters - sumVotes;
+            const diffDetail = diff > 0 ? `faltan ${diff} votos` : `sobran ${Math.abs(diff)} votos`;
+            sufragioEscrutinioShort = diff > 0 ? `Faltan ${diff}` : `Sobran ${Math.abs(diff)}`;
+            const msg = `Cuadre Sufragio vs. Escrutinio: La suma de votos (${sumVotes}) difiere del Total de ciudadanos que votaron en B (${voters}) — ${diffDetail}.`;
+            const item = pushIssue(
+              "error",
+              "c",
+              msg,
+              [...allVoteRowInputs, ...totalVotesInputs, ...votersInputs, ...citizensCInputs],
+              totalVotesInputs[0]
+            );
+            criticalAlerts.push(item);
+            sufragioMessages.push(`✕ ${msg}`);
+            citizensCMessages.push(`✕ ${msg}`);
+          }
+
+          if (totalVotes === null) {
+            pushIssue("pending", "c", "Sección C · Completa las casillas de Total de votos emitidos.", null, totalVotesInputs[0]);
+          } else if (runningSum !== null && runningSum <= 999 && runningSum !== totalVotes) {
+            hasSufragioEscrutinioError = true;
+            const diff = totalVotes - runningSum;
+            if (!sufragioEscrutinioShort) {
+              sufragioEscrutinioShort = diff > 0 ? `Suma -${diff}` : `Suma +${Math.abs(diff)}`;
+            }
+            const msg = `Cuadre tabla de escrutinio (C): ${diffMessage("votos", totalVotes, runningSum)} La suma de las filas ingresadas es ${runningSum} y el Total escrito es ${totalVotes}.`;
+            const item = pushIssue("error", "c", msg, [...allVoteRowInputs, ...totalVotesInputs], totalVotesInputs[0]);
+            criticalAlerts.push(item);
+          }
+
+          if (totalVotes !== null && voters !== null && totalVotes !== voters && (allRowsReady || runningSum === null) && (sumVotes === null || sumVotes === voters)) {
+            hasSufragioEscrutinioError = true;
+            const diff = voters - totalVotes;
+            if (!sufragioEscrutinioShort) {
+              sufragioEscrutinioShort = diff > 0 ? `Faltan ${diff}` : `Sobran ${Math.abs(diff)}`;
+            }
+            const msg = `Cuadre Sufragio vs. Escrutinio: Total de votos emitidos (${totalVotes}) ≠ Total de ciudadanos que votaron en B (${voters}) — ${diff > 0 ? `faltan ${diff} votos` : `sobran ${Math.abs(diff)} votos`}.`;
+            const item = pushIssue("error", "c", msg, [...totalVotesInputs, ...votersInputs], totalVotesInputs[0]);
+            criticalAlerts.push(item);
+            sufragioMessages.push(`✕ ${msg}`);
+          }
+
+          if (citizensC === null) {
+            pushIssue("pending", "c", "Sección C · Completa el Total de ciudadanos que votaron al pie del escrutinio.", null, citizensCInputs[0]);
+          } else {
+            if (voters !== null && citizensC !== voters) {
+              hasSufragioEscrutinioError = true;
+              const diff = voters - citizensC;
+              if (!sufragioEscrutinioShort) {
+                sufragioEscrutinioShort = `C≠B (${diff > 0 ? "-" : "+"}${Math.abs(diff)})`;
+              }
+              const msg = `Transcripción Sufragio vs. Escrutinio: El Total de ciudadanos que votaron en C (${citizensC}) no coincide con B (${voters}) — ${diffMessage("ciudadanos", voters, citizensC)}`;
+              const item = pushIssue("error", "c", msg, [...citizensCInputs, ...votersInputs], citizensCInputs[0]);
+              criticalAlerts.push(item);
+              sufragioMessages.push(`✕ ${msg}`);
+              citizensCMessages.push(`✕ ${msg}`);
+            } else if (voters === null && sumVotes !== null && sumVotes !== citizensC) {
+              hasSufragioEscrutinioError = true;
+              const diff = citizensC - sumVotes;
+              if (!sufragioEscrutinioShort) {
+                sufragioEscrutinioShort = diff > 0 ? `Faltan ${diff}` : `Sobran ${Math.abs(diff)}`;
+              }
+              const msg = `Cuadre Sufragio vs. Escrutinio: La suma de votos (${sumVotes}) difiere del Total de ciudadanos que votaron en C (${citizensC}) — ${diff > 0 ? `faltan ${diff} votos` : `sobran ${Math.abs(diff)} votos`}.`;
+              const item = pushIssue("error", "c", msg, [...allVoteRowInputs, ...totalVotesInputs, ...citizensCInputs], citizensCInputs[0]);
+              criticalAlerts.push(item);
+              citizensCMessages.push(`✕ ${msg}`);
+            }
+
+            if (electores !== null && citizensC > electores) {
+              const excess = citizensC - electores;
+              const msg = `Tope de electores (C): Ciudadanos que votaron al pie de C (${citizensC}) supera en ${excess} a los electores hábiles (${electores}).`;
+              const item = pushIssue("error", "c", msg, [...citizensCInputs, ...$$('[data-header-box="electores"]')], citizensCInputs[0]);
+              criticalAlerts.push(item);
+              citizensCMessages.push(`✕ ${msg}`);
+              if (voters === null || voters <= electores) {
+                setRulePill("ruleTope", "error", `Pie C +${excess}`, () => jumpToSectionField("c", citizensCInputs[0]));
+              }
+            }
+          }
+
+          if (!hasSufragioEscrutinioError && runningSum !== null && refVoters !== null && runningSum === refVoters && totalVotes === runningSum) {
+            numberGroups.totalVotes.classList.add("is-match-cell");
+          }
+
+          if (hasSufragioEscrutinioError) {
+            setRulePill("ruleSufragioEscrutinio", "error", sufragioEscrutinioShort || "Descuadre", () => jumpToSectionField("c", totalVotesInputs[0]));
+          } else if (sumVotes !== null && voters !== null && totalVotes !== null && citizensC !== null) {
+            setRulePill("ruleSufragioEscrutinio", "ok", `${sumVotes} = ${voters}`, () => jumpToSectionField("c", totalVotesInputs[0]));
+          } else if (runningSum !== null && refVoters !== null) {
+            const remaining = refVoters - runningSum;
+            const liveLabel = remaining === 0 ? `${runningSum}/${refVoters} ✓` : `${runningSum}/${refVoters} (-${remaining})`;
+            setRulePill("ruleSufragioEscrutinio", "pending", liveLabel, () => jumpToSectionField("c", totalVotesInputs[0]));
+          } else {
+            setRulePill("ruleSufragioEscrutinio", "pending", "Faltan votos/B", () => jumpToSectionField(voters === null ? "b" : "c", voters === null ? votersInputs[0] : allVoteRowInputs[0]));
+          }
+
+          // Barra de referencia y progreso en vivo dentro de C
+          const voteRef = $("#voteReference");
+          const voteRefText = $("#voteRefText");
+          const voteRefAction = $("#voteRefAction");
+          const voteProgressTrack = $("#voteProgressTrack");
+          const voteProgressFill = $("#voteProgressFill");
+
+          voteRef.classList.remove("is-progress", "is-match", "is-mismatch");
+          voteRefAction.hidden = true;
+          voteRefAction.onclick = null;
+          voteProgressTrack.hidden = true;
+
+          if (runningSum !== null) {
+            const sumStr = String(runningSum);
+            if (runningSum > 999) {
+              voteRef.classList.add("is-mismatch");
+              voteRefText.textContent = `✕ La suma acumulada (${sumStr}) excede el máximo de 999 votos permitidos.`;
+            } else if (totalVotes !== null && totalVotes !== runningSum) {
+              voteRef.classList.add("is-mismatch");
+              const diff = totalVotes - runningSum;
+              voteRefText.textContent = `✕ El Total escrito (${totalVotes}) difiere de la suma automática de las filas (${sumStr}) — ${diff > 0 ? `faltan ${diff}` : `sobran ${Math.abs(diff)}`}.`;
+              voteRefAction.hidden = false;
+              voteRefAction.textContent = `Usar suma (${sumStr})`;
+              voteRefAction.onclick = () => {
+                syncRunningTotalVotes();
+                scheduleSaveAndValidate();
+              };
+            } else if (refVoters !== null) {
+              const pct = refVoters > 0 ? Math.min(100, Math.round((runningSum / refVoters) * 100)) : 100;
+              voteProgressTrack.hidden = false;
+              voteProgressFill.style.width = `${pct}%`;
+
+              if (runningSum > refVoters) {
+                const excess = runningSum - refVoters;
+                voteRef.classList.add("is-mismatch");
+                voteRefText.textContent = `✕ Excede el total: llevas ${sumStr} / ${refVoters} votos — sobran ${excess} votos respecto al Total de ciudadanos que votaron.`;
+              } else if (runningSum === refVoters) {
+                voteRef.classList.add("is-match");
+                if (missingCount > 0) {
+                  voteRefText.textContent = `✓ ¡Coincide exacto! ${sumStr} / ${refVoters} votos = Total de ciudadanos que votaron (quedan ${missingCount} ${missingCount === 1 ? "fila vacía" : "filas vacías"}).`;
+                  voteRefAction.hidden = false;
+                  voteRefAction.textContent = "Completar vacíos con 0";
+                  voteRefAction.onclick = () => {
+                    VOTE_COUNT_KEYS.forEach((key) => {
+                      if (readDigitGroup(numberGroups[key]) === null) {
+                        writeDigitGroup(numberGroups[key], 0);
+                      }
+                    });
+                    syncRunningTotalVotes();
+                    scheduleSaveAndValidate();
+                    notify("Filas vacías completadas con 0.");
+                  };
+                } else {
+                  voteRefText.textContent = `✓ ¡Cuadre exacto! Total de votos emitidos (${sumStr}) = Total de ciudadanos que votaron (${refVoters}).`;
+                }
+              } else {
+                const remaining = refVoters - runningSum;
+                if (allRowsReady) {
+                  voteRef.classList.add("is-mismatch");
+                  voteRefText.textContent = `✕ Descuadre Sufragio vs. Escrutinio: la suma de las 5 filas es ${sumStr}, pero votaron ${refVoters} — faltan ${remaining} votos.`;
+                } else {
+                  voteRef.classList.add("is-progress");
+                  voteRefText.textContent = `Suma en tiempo real: ${sumStr} / ${refVoters} votos · Faltan ${remaining} votos para coincidir con el total que votaron.`;
+                }
+              }
+            } else {
+              voteRef.classList.add("is-progress");
+              voteRefText.textContent = `Suma acumulada en vivo: ${sumStr} votos (${5 - missingCount} de 5 filas). Ingresa el Total de ciudadanos que votaron en B para comprobar el cuadre.`;
+            }
+          } else {
+            voteRefText.textContent = refVoters !== null
+              ? `Meta a igualar: ${refVoters} ciudadanos que votaron. Ingresa los votos por fila y el Total se irá sumando automáticamente.`
+              : "Suma automática: ingresa los votos en cada fila y el Total de votos emitidos se irá sumando en tiempo real.";
+          }
+
+          const sufragioAlertEl = $("#sufragioCrossAlert");
+          if (sufragioAlertEl) {
+            sufragioAlertEl.hidden = sufragioMessages.length === 0;
+            sufragioAlertEl.textContent = sufragioMessages.join(" · ");
+          }
+          const citizensCAlertEl = $("#citizensCCrossAlert");
+          if (citizensCAlertEl) {
+            citizensCAlertEl.hidden = citizensCMessages.length === 0;
+            citizensCAlertEl.textContent = citizensCMessages.join(" · ");
+          }
+
+          // --- 7. REGLA 4: Coherencia horaria ---
+          const timeValues = TIME_SLOTS.map(({ slot, label, tab }) => {
+            const raw = getTimeSlotValue(slot);
+            const mins = timeToMinutes(raw);
+            if (mins === null) {
+              pushIssue("pending", tab, `${label}: selecciona la hora.`, null, $(`[data-time-wrap="${slot}"]`));
+            }
+            return { slot, label, tab, raw, mins };
+          });
+
+          const [tInst, tSufEnd, tEscStart, tEscEnd] = timeValues;
+          let hasTimeError = false;
+          let timeErrorFocus = { tab: "a", el: $(`[data-time-wrap="install"]`) };
+
+          if (tInst.mins !== null && tSufEnd.mins !== null && !(tInst.mins < tSufEnd.mins)) {
+            hasTimeError = true;
+            timeErrorFocus = { tab: "b", el: $(`[data-time-wrap="sufragioEnd"]`) };
+            const msg = `Coherencia horaria: La hora de cierre del sufragio (${format12Hour(tSufEnd.raw)}) debe ser posterior a la instalación (${format12Hour(tInst.raw)}).`;
+            const item = pushIssue("error", "b", msg, [$(`[data-time-wrap="install"]`), $(`[data-time-wrap="sufragioEnd"]`)], $(`[data-time-wrap="sufragioEnd"]`));
+            criticalAlerts.push(item);
+          }
+          if (tSufEnd.mins !== null && tEscStart.mins !== null && !(tSufEnd.mins <= tEscStart.mins)) {
+            hasTimeError = true;
+            timeErrorFocus = { tab: "c", el: $(`[data-time-wrap="escrutinioStart"]`) };
+            const msg = `Coherencia horaria: El inicio del escrutinio (${format12Hour(tEscStart.raw)}) no puede ser anterior al cierre del sufragio (${format12Hour(tSufEnd.raw)}).`;
+            const item = pushIssue("error", "c", msg, [$(`[data-time-wrap="sufragioEnd"]`), $(`[data-time-wrap="escrutinioStart"]`)], $(`[data-time-wrap="escrutinioStart"]`));
+            criticalAlerts.push(item);
+          }
+          if (tEscStart.mins !== null && tEscEnd.mins !== null && !(tEscStart.mins < tEscEnd.mins)) {
+            hasTimeError = true;
+            timeErrorFocus = { tab: "c", el: $(`[data-time-wrap="escrutinioEnd"]`) };
+            const msg = `Coherencia horaria: El escrutinio no puede terminar (${format12Hour(tEscEnd.raw)}) antes o a la misma hora de iniciar (${format12Hour(tEscStart.raw)}).`;
+            const item = pushIssue("error", "c", msg, [$(`[data-time-wrap="escrutinioStart"]`), $(`[data-time-wrap="escrutinioEnd"]`)], $(`[data-time-wrap="escrutinioEnd"]`));
+            criticalAlerts.push(item);
+          }
+          if (tInst.mins !== null && tSufEnd.mins === null && tEscStart.mins !== null && !(tInst.mins < tEscStart.mins)) {
+            hasTimeError = true;
+            timeErrorFocus = { tab: "c", el: $(`[data-time-wrap="escrutinioStart"]`) };
+            const msg = `Coherencia horaria: El inicio del escrutinio (${format12Hour(tEscStart.raw)}) debe ser posterior a la instalación (${format12Hour(tInst.raw)}).`;
+            const item = pushIssue("error", "c", msg, [$(`[data-time-wrap="install"]`), $(`[data-time-wrap="escrutinioStart"]`)], $(`[data-time-wrap="escrutinioStart"]`));
+            criticalAlerts.push(item);
+          }
+          if (tInst.mins !== null && tEscStart.mins === null && tEscEnd.mins !== null && !(tInst.mins < tEscEnd.mins)) {
+            hasTimeError = true;
+            timeErrorFocus = { tab: "c", el: $(`[data-time-wrap="escrutinioEnd"]`) };
+            const msg = `Coherencia horaria: El fin del escrutinio (${format12Hour(tEscEnd.raw)}) debe ser posterior a la instalación (${format12Hour(tInst.raw)}).`;
+            const item = pushIssue("error", "c", msg, [$(`[data-time-wrap="install"]`), $(`[data-time-wrap="escrutinioEnd"]`)], $(`[data-time-wrap="escrutinioEnd"]`));
+            criticalAlerts.push(item);
+          }
+
+          if (hasTimeError) {
+            setRulePill("ruleHorarios", "error", "Orden inválido", () => jumpToSectionField(timeErrorFocus.tab, timeErrorFocus.el));
+          } else if (timeValues.every((t) => t.mins !== null)) {
+            setRulePill("ruleHorarios", "ok", "Orden válido", () => jumpToSectionField("a", $(`[data-time-wrap="install"]`)));
+          } else {
+            const firstMissing = timeValues.find((t) => t.mins === null) || timeValues[0];
+            setRulePill("ruleHorarios", "pending", "Faltan horas", () => jumpToSectionField(firstMissing.tab, $(`[data-time-wrap="${firstMissing.slot}"]`)));
+          }
+
+          // Banda fija de alertas críticas en cabecera
+          const alertsBar = $("#validationAlertsBar");
+          if (alertsBar) {
+            alertsBar.innerHTML = "";
+            if (criticalAlerts.length > 0) {
+              alertsBar.hidden = false;
+              criticalAlerts.forEach((alertItem) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "validation-alert-btn";
+                btn.innerHTML = `<span aria-hidden="true">✕</span><span></span>`;
+                btn.lastElementChild.textContent = alertItem.message;
+                btn.addEventListener("click", () => jumpToSectionField(alertItem.section, alertItem.focusEl));
+                alertsBar.appendChild(btn);
+              });
+            } else {
+              alertsBar.hidden = true;
+            }
+          }
+
+          // --- 8. Estado global, badges por pestaña y popover de errores ---
+          const globalState = errors.length ? "error" : pending.length ? "pending" : "ok";
+          const statusChip = $("#globalStatus");
+          statusChip.dataset.state = globalState;
+          statusChip.textContent = globalState === "error" ? "CON ERRORES" : globalState === "ok" ? "ACTA CONFORME" : "INCOMPLETA";
+
+          const allIssues = [...errors, ...pending, ...warnings];
+          const issueCountEl = $("#issueCount");
+          issueCountEl.textContent = String(allIssues.length);
+          issueCountEl.classList.toggle("has-errors", errors.length > 0);
+          issueCountEl.classList.toggle("all-ok", allIssues.length === 0);
+
+          $("#issuesCountsBar").innerHTML = `
+            <span class="ic-err">${errors.length} err</span>
+            <span class="ic-pen">${pending.length} pend</span>
+            <span class="ic-wrn">${warnings.length} avisos</span>
+          `;
+
+          const issuesList = $("#issuesList");
+          issuesList.innerHTML = "";
+          if (!allIssues.length) {
+            issuesList.innerHTML = `<div class="all-clear">✓ Acta sin discrepancias. Todas las reglas y verificaciones están conformes.</div>`;
+          } else {
+            const ul = document.createElement("ul");
+            allIssues.forEach((issue) => {
+              const li = document.createElement("li");
+              li.className = `issue-item issue-${issue.level}`;
+              const badge = document.createElement("span");
+              badge.className = "issue-badge";
+              badge.textContent = issue.level === "error" ? "Error" : issue.level === "warning" ? "Aviso" : "Pendiente";
+              const msg = document.createElement("span");
+              msg.textContent = issue.message;
+              li.append(badge, msg);
+              li.addEventListener("click", () => jumpToSectionField(issue.section, issue.focusEl));
+              ul.appendChild(li);
+            });
+            issuesList.appendChild(ul);
+          }
+
+          ["a", "b", "c"].forEach((tabKey) => {
+            const badge = $(`#tabBadge${tabKey.toUpperCase()}`);
+            const tabErrors = errors.filter((e) => e.section === tabKey).length;
+            const tabPending = pending.filter((p) => p.section === tabKey).length;
+            badge.classList.remove("state-error", "state-ok");
+            if (tabErrors > 0) {
+              badge.classList.add("state-error");
+              badge.textContent = String(tabErrors);
+            } else if (tabPending === 0) {
+              badge.classList.add("state-ok");
+              badge.textContent = "✓";
+            } else {
+              badge.textContent = String(tabPending);
+            }
+          });
+
+          return { globalState, errors, pending, warnings };
+        }
+
+        /* =====================================================================
+           9. PERSISTENCIA MULTIMESA OFFLINE (localStorage) Y TIRA DE MESAS
+           ===================================================================== */
+        function getActiveMesa() {
+          return state.mesas.find((m) => m.id === state.activeId) || state.mesas[0];
+        }
+
+        function mesaLabel(mesa) {
+          const realNo = onlyDigits(mesa?.data?.fields?.metaMesa || "", 6);
+          return realNo ? `Mesa ${realNo}` : (mesa?.name || "Mesa sin número");
+        }
+
+        function getUniqueRequiredVerifyKeys() {
+          const seen = new Set();
+          $$('.verify-btn[data-required="true"]').forEach((b) => seen.add(b.dataset.verifyKey));
+          return Array.from(seen);
+        }
+
+        function getMesaSummary(mesa) {
+          const requiredKeys = getUniqueRequiredVerifyKeys();
+          const verifies = mesa?.data?.verifies || {};
+          const verifiedCount = requiredKeys.filter((k) => Number(verifies[k] || 0) === 1).length;
+          const progress = requiredKeys.length ? Math.round((verifiedCount * 100) / requiredKeys.length) : 0;
+
+          if (mesa?.id === state.activeId) {
+            const st = $("#globalStatus").dataset.state || "pending";
+            return { progress, state: st };
+          }
+          const anyRed = Object.values(verifies).some((v) => Number(v) === 2);
+          return { progress, state: anyRed ? "error" : progress === 100 ? "ok" : "pending" };
+        }
+
+        function captureCurrentMesaData() {
+          const fields = {};
+          $$("#pagesStack [data-persist-key]").forEach((el) => {
+            fields[el.dataset.persistKey] = el.value;
+          });
+          fields.metaMesa = getHeaderValue("mesa");
+          fields.metaElectores = getHeaderValue("electores");
+          fields.metaDepartamento = getHeaderValue("departamento");
+          fields.metaProvincia = getHeaderValue("provincia");
+          fields.metaDistrito = getHeaderValue("distrito");
+
+          const verifies = {};
+          $$(".verify-btn[data-verify-key]").forEach((btn) => {
+            verifies[btn.dataset.verifyKey] = Number(btn.dataset.state || 0);
+          });
+
+          const times = {};
+          TIME_SLOTS.forEach(({ slot }) => {
+            times[slot] = getTimeSlotValue(slot);
+          });
+
+          const selectedMat = $(".yn-btn.checked", page4a);
+          return {
+            fields,
+            verifies,
+            times,
+            selectedMaterial: selectedMat ? selectedMat.dataset.yn : ""
+          };
+        }
+
+        function updateAutosaveIndicator(mode = "saved") {
+          if (!autosaveBadge || !autosaveText) return;
+          const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+          const clock = formatSavedClock(state.lastSavedAt);
+          const mesasCount = state.mesas.length;
+          const mesasLabel = `${mesasCount} ${mesasCount === 1 ? "mesa" : "mesas"}`;
+
+          if (mode === "saving") {
+            autosaveBadge.dataset.saveState = "saving";
+            autosaveText.textContent = "Guardando…";
+            autosaveBadge.title = "Guardando cambios en almacenamiento local...";
+            return;
+          }
+
+          if (mode === "error") {
+            autosaveBadge.dataset.saveState = "error";
+            autosaveText.textContent = "Error al guardar";
+            autosaveBadge.title = "No se pudo escribir en localStorage. Libera espacio en el navegador.";
+            return;
+          }
+
+          if (isOffline) {
+            autosaveBadge.dataset.saveState = "offline";
+            autosaveText.textContent = clock ? `Offline · ${clock}` : "Offline · Guardado";
+            autosaveBadge.title = `Sin conexión a internet. Guardado automático local activo (${mesasLabel}${clock ? `, último guardado ${clock}` : ""}). Toca para guardar ahora.`;
+          } else {
+            autosaveBadge.dataset.saveState = "saved";
+            autosaveText.textContent = clock ? `Guardado ${clock}` : "Guardado local";
+            autosaveBadge.title = `Guardado automático en este dispositivo (${mesasLabel}${clock ? `, último guardado ${clock}` : ""}). Funciona sin señal. Toca para guardar ahora.`;
+          }
+        }
+
+        function renderMesaStrip(scrollActiveHorizontal = false) {
+          const chipsHost = $("#mesaChipsList");
+          const prevScrollLeft = chipsHost.scrollLeft;
+          const total = state.mesas.length;
+          const activeIndex = Math.max(0, state.mesas.findIndex((m) => m.id === state.activeId));
+
+          $("#mesaCounter").textContent = `${activeIndex + 1} / ${total}`;
+          $("#btnPrevMesa").disabled = activeIndex <= 0;
+          $("#btnNextMesa").disabled = activeIndex >= total - 1;
+          $("#btnDeleteMesa").hidden = total <= 1;
+
+          chipsHost.innerHTML = "";
+          state.mesas.forEach((mesa) => {
+            const isActive = mesa.id === state.activeId;
+            const summary = getMesaSummary(mesa);
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = `mesa-chip${isActive ? " active" : ""}`;
+            chip.setAttribute("role", "listitem");
+            chip.setAttribute("aria-current", isActive ? "true" : "false");
+            chip.innerHTML = `
+              <span class="mesa-chip-dot state-${summary.state}"></span>
+              <span>${mesaLabel(mesa)}</span>
+              <span class="mesa-chip-pct">${summary.progress}%</span>
+            `;
+            chip.addEventListener("click", () => switchMesa(mesa.id));
+            chipsHost.appendChild(chip);
+          });
+
+          if (scrollActiveHorizontal) {
+            const activeChip = $(".mesa-chip.active", chipsHost);
+            if (activeChip) {
+              const targetLeft = activeChip.offsetLeft - (chipsHost.clientWidth - activeChip.offsetWidth) / 2;
+              chipsHost.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+            }
+          } else {
+            chipsHost.scrollLeft = prevScrollLeft;
+          }
+        }
+
+        function switchMesa(targetId) {
+          if (targetId === state.activeId) return;
+          saveState();
+          state.activeId = targetId;
+          restoreMesaData(getActiveMesa(), { scrollChip: true });
+          saveState({ skipStrip: true });
+          notify(`Trabajando en ${mesaLabel(getActiveMesa())}`);
+        }
+
+        function restoreMesaData(mesa, { scrollChip = false } = {}) {
+          const data = mesa?.data || {};
+          const fields = data.fields || {};
+          const verifies = data.verifies || {};
+          const times = data.times || {};
+
+          $$("#pagesStack [data-persist-key]").forEach((el) => {
+            el.value = fields[el.dataset.persistKey] ?? "";
+          });
+
+          setHeaderValue("mesa", fields.metaMesa ?? "");
+          setHeaderValue("electores", fields.metaElectores ?? "");
+          setHeaderValue("departamento", fields.metaDepartamento ?? "");
+          setHeaderValue("provincia", fields.metaProvincia ?? "");
+          setHeaderValue("distrito", fields.metaDistrito ?? "");
+
+          TIME_SLOTS.forEach(({ slot }) => {
+            setTimeSlotValue(slot, times[slot] || "");
+          });
+
+          const allKeys = new Set($$(".verify-btn[data-verify-key]").map((b) => b.dataset.verifyKey));
+          allKeys.forEach((key) => setVerifyStateByKey(key, verifies[key] ?? 0));
+
+          ynButtons.forEach((btn) => {
+            const active = btn.dataset.yn === data.selectedMaterial;
+            btn.classList.toggle("checked", active);
+            btn.setAttribute("aria-pressed", active ? "true" : "false");
+          });
+
+          updateWordsFields();
+          validateAll();
+          renderMesaStrip(scrollChip);
+          requestAnimationFrame(recalcScale);
+        }
+
+        function saveState({ skipStrip = false } = {}) {
+          try {
+            const current = getActiveMesa();
+            if (current) current.data = captureCurrentMesaData();
+            state.activeTab = activeTab;
+            state.party1 = $('[data-org-input="1"]')?.value || "";
+            state.party2 = $('[data-org-input="2"]')?.value || "";
+            state.lastSavedAt = Date.now();
+            const serialized = JSON.stringify(state);
+            localStorage.setItem(STORAGE_KEY, serialized);
+            try {
+              localStorage.setItem(STORAGE_BACKUP_KEY, serialized);
+            } catch (_) {
+              // El respaldo secundario es opcional si la cuota está justa
+            }
+            updateAutosaveIndicator("saved");
+          } catch (_) {
+            updateAutosaveIndicator("error");
+            notify("No se pudo guardar en localStorage. Verifica el espacio del navegador.");
+          }
+          if (!skipStrip) renderMesaStrip(false);
+        }
+
+        function parseStoredState(raw) {
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.mesas) && parsed.mesas.length > 0) {
+            return parsed;
+          }
+          return null;
+        }
+
+        function loadState() {
+          try {
+            let parsed = null;
+            try {
+              parsed = parseStoredState(localStorage.getItem(STORAGE_KEY));
+            } catch (_) {
+              parsed = null;
+            }
+            if (!parsed) {
+              try {
+                parsed = parseStoredState(localStorage.getItem(STORAGE_BACKUP_KEY));
+                if (parsed) {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                }
+              } catch (_) {
+                parsed = null;
+              }
+            }
+            if (parsed) {
+              state = { ...state, ...parsed };
+              hadSavedSession = Boolean(parsed.lastSavedAt);
+            }
+          } catch (_) {
+            notify("No se pudo leer el guardado anterior; iniciando en blanco.");
+          }
+        }
+
+        function flushSave() {
+          clearTimeout(saveTimer);
+          saveTimer = null;
+          updateWordsFields();
+          saveState({ skipStrip: true });
+        }
+
+        function scheduleSaveAndValidate() {
+          updateAutosaveIndicator("saving");
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(() => {
+            saveTimer = null;
+            updateWordsFields();
+            validateAll();
+            saveState();
+          }, 40);
+        }
+
+        if (autosaveBadge) {
+          autosaveBadge.addEventListener("click", () => {
+            flushSave();
+            const clock = formatSavedClock(state.lastSavedAt, true);
+            notify(`Progreso guardado localmente (${clock}). Funciona sin señal.`);
+          });
+        }
+
+        window.addEventListener("pagehide", flushSave);
+        window.addEventListener("beforeunload", flushSave);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "hidden") flushSave();
+        });
+
+        window.addEventListener("offline", () => {
+          flushSave();
+          updateAutosaveIndicator("saved");
+          notify("Sin señal: el guardado automático offline sigue protegiendo tus datos.");
+        });
+
+        window.addEventListener("online", () => {
+          updateAutosaveIndicator("saved");
+          notify("Señal restablecida · Todos tus datos siguen guardados localmente.");
+        });
+
+        /* =====================================================================
+           10. ACCIONES MULTIMESA Y MODALES PROPIOS
+           ===================================================================== */
+        $("#btnPrevMesa").addEventListener("click", () => {
+          const idx = state.mesas.findIndex((m) => m.id === state.activeId);
+          if (idx > 0) switchMesa(state.mesas[idx - 1].id);
+        });
+
+        $("#btnNextMesa").addEventListener("click", () => {
+          const idx = state.mesas.findIndex((m) => m.id === state.activeId);
+          if (idx >= 0 && idx < state.mesas.length - 1) switchMesa(state.mesas[idx + 1].id);
+        });
+
+        $("#btnNewMesa").addEventListener("click", () => {
+          saveState();
+          const newId = `mesa-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          state.mesas.push({ id: newId, name: `Mesa ${state.mesas.length + 1}`, data: {} });
+          state.activeId = newId;
+          restoreMesaData(getActiveMesa(), { scrollChip: true });
+          saveState();
+          const mesaInput = getActiveHeaderInput("mesa");
+          if (mesaInput) {
+            setTimeout(() => {
+              mesaInput.scrollIntoView({ behavior: "smooth", block: "center" });
+              mesaInput.focus();
+            }, 60);
+          }
+          notify("Nueva mesa creada. Escribe el N.° de mesa directo en el acta.");
+        });
+
+        const deleteMesaModal = $("#deleteMesaModal");
+
+        function openDeleteMesaModal() {
+          if (state.mesas.length <= 1) return;
+          const label = mesaLabel(getActiveMesa());
+          $("#deleteMesaText").textContent = `¿Deseas eliminar "${label}" de la lista? Esta acción no se puede deshacer.`;
+          deleteMesaModal.classList.add("open");
+        }
+
+        function closeDeleteMesaModal() {
+          deleteMesaModal.classList.remove("open");
+        }
+
+        $("#btnDeleteMesa").addEventListener("click", openDeleteMesaModal);
+        $("#btnCancelDeleteMesa").addEventListener("click", closeDeleteMesaModal);
+        deleteMesaModal.addEventListener("click", (e) => { if (e.target === deleteMesaModal) closeDeleteMesaModal(); });
+
+        $("#btnConfirmDeleteMesa").addEventListener("click", () => {
+          if (state.mesas.length <= 1) return;
+          const idx = state.mesas.findIndex((m) => m.id === state.activeId);
+          state.mesas.splice(idx, 1);
+          const nextIdx = Math.min(idx, state.mesas.length - 1);
+          state.activeId = state.mesas[nextIdx].id;
+          restoreMesaData(getActiveMesa(), { scrollChip: true });
+          saveState();
+          closeDeleteMesaModal();
+          notify("Mesa eliminada.");
+        });
+
+        const resetModal = $("#resetModal");
+
+        function openResetModal() {
+          const label = mesaLabel(getActiveMesa());
+          $("#resetModalText").textContent = `¿Deseas borrar todos los datos y verificaciones de "${label}"? Esta acción no se puede deshacer y las demás mesas se conservarán.`;
+          resetModal.classList.add("open");
+        }
+
+        function closeResetModal() {
+          resetModal.classList.remove("open");
+        }
+
+        $("#btnResetTop").addEventListener("click", openResetModal);
+        $("#btnCancelReset").addEventListener("click", closeResetModal);
+        resetModal.addEventListener("click", (e) => { if (e.target === resetModal) closeResetModal(); });
+
+        $("#btnConfirmReset").addEventListener("click", () => {
+          const current = getActiveMesa();
+          if (current) {
+            const keepMesaNo = onlyDigits(getHeaderValue("mesa"), 6);
+            current.data = keepMesaNo ? { fields: { metaMesa: keepMesaNo }, verifies: {}, times: {}, selectedMaterial: "" } : {};
+            restoreMesaData(current);
+            saveState();
+          }
+          closeResetModal();
+          notify("Mesa activa reiniciada correctamente.");
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            closeResetModal();
+            closeDeleteMesaModal();
+            issuesPopover.classList.remove("open");
+            btnIssuesToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        /* =====================================================================
+           11. INICIALIZACIÓN Y OBSERVADOR DE REDIMENSIONAMIENTO
+           ===================================================================== */
+        loadState();
+        const org1Input = $('[data-org-input="1"]');
+        const org2Input = $('[data-org-input="2"]');
+        if (org1Input) org1Input.value = state.party1 || "";
+        if (org2Input) org2Input.value = state.party2 || "";
+
+        if (!state.mesas.some((m) => m.id === state.activeId)) {
+          state.activeId = state.mesas[0].id;
+        }
+
+        restoreMesaData(getActiveMesa());
+        const restoredTab = ["a", "b", "c"].includes(state.activeTab) ? state.activeTab : "a";
+        setTab(restoredTab, false);
+        updateZoomButtons();
+        updateAutosaveIndicator("saved");
+        if (hadSavedSession) {
+          const clock = formatSavedClock(state.lastSavedAt);
+          notify(`Progreso recuperado automáticamente${clock ? ` (${clock})` : ""}.`);
+        }
+
+        window.addEventListener("resize", recalcScale);
+        if (typeof ResizeObserver !== "undefined") {
+          const ro = new ResizeObserver(() => recalcScale());
+          ro.observe(viewerStage);
+          ro.observe(opsHeader);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
